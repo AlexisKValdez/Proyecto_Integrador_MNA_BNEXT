@@ -196,7 +196,11 @@ las tablas guardadas de la corrida.
 | `EVIDENCIA_NEGOCIO` | todo `False` | Cambiar a `True` cuando Bnext apruebe alcance, servicios y disponibilidad de atributos |
 | `NIVEL_TECHO_OPERATIVO` | `"p90"` | Techo de surtido que se publica (P80 o P90, según decida Bnext) |
 | `REGISTRAR_EN_UC` | `None` | `None` = registra en Unity Catalog sólo en modo completo y si pasan las comprobaciones técnicas; `True`/`False` lo fuerza |
-| `USAR_CALENDARIO_PROMOS` | `False` | Activar cuando exista `silver.calendario_promociones` |
+| `USAR_CALENDARIO_PROMOS` | `True` | Usa las variables `f_*` del calendario de promociones planeadas (`13_calendario_promociones_plan`); si la tabla no existe, avisa y sigue sin ellas |
+| `INCLUIR_Q_LIGHTGBM` | `True` | `False` ahorra ~40 min en modo completo (el modelo final usa Q_Conformal) |
+
+Todos los interruptores de la sección 1.1, `REGISTRAR_EN_UC`, `INCLUIR_Q_LIGHTGBM` y `USAR_CALENDARIO_PROMOS` se pueden fijar como
+**parámetros de un Job** (mismo nombre) o desde los widgets del notebook, sin editar celdas (`jobs/J3_entrenamiento.json`).
 
 ---
 
@@ -227,10 +231,18 @@ las tablas guardadas de la corrida.
 
 ---
 
-## 8. Promociones: lo que el modelo ve hoy
+## 8. Promociones: pasadas y planeadas
 
-El modelo **sólo ve promociones pasadas**: las cuatro variables de promoción usan días anteriores o iguales al día del
-pronóstico. Ninguna mira los 14 días que se pronostican, así que una promoción que empieza dentro de esa ventana no se
-anticipa. La sección 9 deja listo el uso de un **calendario de promociones planeadas**: esquema, validación y las
-variables `f_promos_planeadas`, `f_descuento_planeado` y `f_dias_promo_restantes`, que entran al modelo con
-`USAR_CALENDARIO_PROMOS = True` en cuanto Bnext entregue el calendario.
+Las variables `s_*` del modelo describen **promociones pasadas** (días ≤ T). Desde esta versión, con
+`USAR_CALENDARIO_PROMOS = True`, entran además las variables del **plan**: `f_promos_planeadas`, `f_descuento_planeado` y
+`f_dias_promo_restantes`, que salen de `silver.calendario_promociones_plan_dia` (notebook `13_calendario_promociones_plan`,
+alimentado por el Excel editable `outputs/calendario/calendario_promociones_plan.xlsx`). Para que no haya fuga, en cada
+origen T sólo cuentan las promociones cuya `fecha_publicacion` es ≤ T; el histórico se aproxima con la vigencia observada
+(supuesto declarado: cada promoción se conocía 14 días antes de empezar). El plan actual es un placeholder inventado
+que se sustituye editando el Excel; la sección 9 de la libreta muestra qué fuente tiene cada promoción.
+
+## 9. Operación después de esta libreta
+
+`22_pronostico_operativo` pronostica con el modelo registrado sin reentrenar; `23_monitoreo` mide el acierto cuando llega la
+venta real; `24_promocion_modelo` pasa `@challenger` a `@champion`; `30`, `31` y `40` producen los escenarios, el reparto
+a producto y las tablas del tablero (ver `Avance6/README.md`).

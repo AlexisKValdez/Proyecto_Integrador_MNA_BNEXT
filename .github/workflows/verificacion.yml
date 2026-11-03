@@ -1,0 +1,27 @@
+name: verificacion
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dependencias mínimas
+        run: pip install pytest pandas numpy
+      - name: Sintaxis de todas las celdas y pruebas de funciones puras
+        run: python -m pytest -q pruebas/test_funciones.py
+      - name: Sin cifras del negocio ni datos
+        run: |
+          set -e
+          if grep -rn -E "[0-9]{1,3},[0-9]{3},[0-9]{3}|\\\$[0-9]{1,3},[0-9]{3}" --include=*.py --include=*.md --include=*.ipynb databricks Avance5 Avance6 docs fuente | grep -v "pruebas/"; then
+            echo "Hay cifras con formato de importe o conteo grande"; exit 1; fi
+          if find . -path ./.git -prune -o -type f \( -name "*.parquet" -o -name "*.pkl" \) -print | grep .; then
+            echo "Hay archivos de datos"; exit 1; fi
+          echo "ok"
