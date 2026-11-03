@@ -1,0 +1,54 @@
+{
+  "name": "MNA43 · J3 entrenamiento",
+  "description": "Corrida completa del Avance 5: ajuste fino, ensambles, selección, prueba no vista, modelo final, registro @challenger y pronóstico.",
+  "max_concurrent_runs": 1,
+  "timeout_seconds": 28800,
+  "email_notifications": {
+    "on_failure": [
+      "__CORREO__"
+    ],
+    "no_alert_for_skipped_runs": true
+  },
+  "tags": {
+    "proyecto": "mna_equipo43",
+    "avance": "6"
+  },
+  "tasks": [
+    {
+      "task_key": "Avance5.43",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/2_modelos/Avance5.43",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "MODO_RAPIDO": "False",
+          "REENTRENAR_FINAL": "True",
+          "USAR_CALENDARIO_PROMOS": "True",
+          "INCLUIR_Q_LIGHTGBM": "True",
+          "RUN_ID_REANUDAR": "",
+          "MODO_PUBLICO": "True"
+        }
+      },
+      "environment_key": "serverless_ml",
+      "timeout_seconds": 28800
+    }
+  ],
+  "environments": [
+    {
+      "environment_key": "serverless_ml",
+      "spec": {
+        "client": "2",
+        "dependencies": [
+          "lightgbm>=4.3,<5",
+          "xgboost>=2.0,<4",
+          "catboost>=1.2,<2",
+          "optuna>=3.6,<5",
+          "shap>=0.44,<1",
+          "openpyxl>=3.1,<4"
+        ]
+      }
+    }
+  ],
+  "queue": {
+    "enabled": true
+  }
+}

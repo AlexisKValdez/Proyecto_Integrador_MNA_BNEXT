@@ -1,0 +1,103 @@
+{
+  "name": "MNA43 · J4 inferencia",
+  "description": "Pronóstico operativo con el modelo registrado, escenarios what-if, reparto a producto y tablas del tablero.",
+  "max_concurrent_runs": 1,
+  "timeout_seconds": 21600,
+  "email_notifications": {
+    "on_failure": [
+      "__CORREO__"
+    ],
+    "no_alert_for_skipped_runs": true
+  },
+  "tags": {
+    "proyecto": "mna_equipo43",
+    "avance": "6"
+  },
+  "tasks": [
+    {
+      "task_key": "22_pronostico_operativo",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/3_operacion/22_pronostico_operativo",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "ALIAS_MODELO": "champion",
+          "PERMITIR_CHALLENGER": "True"
+        }
+      },
+      "environment_key": "serverless_ml"
+    },
+    {
+      "task_key": "30_simulacion_escenarios_whatif",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/3_operacion/30_simulacion_escenarios_whatif",
+        "source": "WORKSPACE",
+        "base_parameters": {}
+      },
+      "environment_key": "serverless_ml",
+      "depends_on": [
+        {
+          "task_key": "22_pronostico_operativo"
+        }
+      ]
+    },
+    {
+      "task_key": "31_desagregacion_predicciones_sku",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/3_operacion/31_desagregacion_predicciones_sku",
+        "source": "WORKSPACE",
+        "base_parameters": {}
+      },
+      "environment_key": "serverless",
+      "depends_on": [
+        {
+          "task_key": "22_pronostico_operativo"
+        }
+      ]
+    },
+    {
+      "task_key": "40_salidas_dashboard",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/3_operacion/40_salidas_dashboard",
+        "source": "WORKSPACE",
+        "base_parameters": {}
+      },
+      "environment_key": "serverless",
+      "depends_on": [
+        {
+          "task_key": "30_simulacion_escenarios_whatif"
+        },
+        {
+          "task_key": "31_desagregacion_predicciones_sku"
+        }
+      ]
+    }
+  ],
+  "environments": [
+    {
+      "environment_key": "serverless",
+      "spec": {
+        "client": "2",
+        "dependencies": [
+          "openpyxl>=3.1,<4"
+        ]
+      }
+    },
+    {
+      "environment_key": "serverless_ml",
+      "spec": {
+        "client": "2",
+        "dependencies": [
+          "lightgbm>=4.3,<5",
+          "xgboost>=2.0,<4",
+          "catboost>=1.2,<2",
+          "optuna>=3.6,<5",
+          "shap>=0.44,<1",
+          "openpyxl>=3.1,<4"
+        ]
+      }
+    }
+  ],
+  "queue": {
+    "enabled": true
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "name": "MNA43 · J1 ingesta_mes",
+  "description": "Carga un mes nuevo a Bronce, relimpia Plata (deduplicación entre meses), rehace el panel, la línea base y la compuerta de datos.",
+  "max_concurrent_runs": 1,
+  "timeout_seconds": 21600,
+  "email_notifications": {
+    "on_failure": [
+      "__CORREO__"
+    ],
+    "no_alert_for_skipped_runs": true
+  },
+  "tags": {
+    "proyecto": "mna_equipo43",
+    "avance": "6"
+  },
+  "tasks": [
+    {
+      "task_key": "02_carga_bronce",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/1_datos/02_carga_bronce",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "MESES_A_CARGAR": "{{job.parameters.MES}}"
+        }
+      },
+      "environment_key": "serverless"
+    },
+    {
+      "task_key": "08_limpieza_plata",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/1_datos/08_limpieza_plata",
+        "source": "WORKSPACE",
+        "base_parameters": {}
+      },
+      "environment_key": "serverless",
+      "depends_on": [
+        {
+          "task_key": "02_carga_bronce"
+        }
+      ]
+    },
+    {
+      "task_key": "09_panel_diario",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/1_datos/09_panel_diario",
+        "source": "WORKSPACE",
+        "base_parameters": {}
+      },
+      "environment_key": "serverless",
+      "depends_on": [
+        {
+          "task_key": "08_limpieza_plata"
+        }
+      ]
+    },
+    {
+      "task_key": "10_eda_series_y_linea_base",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/1_datos/10_eda_series_y_linea_base",
+        "source": "WORKSPACE",
+        "base_parameters": {}
+      },
+      "environment_key": "serverless",
+      "depends_on": [
+        {
+          "task_key": "09_panel_diario"
+        }
+      ]
+    },
+    {
+      "task_key": "11_validacion_calidad",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/1_datos/11_validacion_calidad",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "DETENER_SI_FALLA": "True"
+        }
+      },
+      "environment_key": "serverless",
+      "depends_on": [
+        {
+          "task_key": "10_eda_series_y_linea_base"
+        }
+      ]
+    }
+  ],
+  "environments": [
+    {
+      "environment_key": "serverless",
+      "spec": {
+        "client": "2",
+        "dependencies": [
+          "openpyxl>=3.1,<4"
+        ]
+      }
+    }
+  ],
+  "queue": {
+    "enabled": true
+  },
+  "parameters": [
+    {
+      "name": "MES",
+      "default": "2026-09"
+    }
+  ]
+}

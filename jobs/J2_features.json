@@ -1,0 +1,59 @@
+{
+  "name": "MNA43 · J2 features",
+  "description": "Calendario de promociones (archivo editable del volumen) y tabla Oro con prueba anti-fuga.",
+  "max_concurrent_runs": 1,
+  "timeout_seconds": 21600,
+  "email_notifications": {
+    "on_failure": [
+      "__CORREO__"
+    ],
+    "no_alert_for_skipped_runs": true
+  },
+  "tags": {
+    "proyecto": "mna_equipo43",
+    "avance": "6"
+  },
+  "tasks": [
+    {
+      "task_key": "13_calendario_promociones_plan",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/1_datos/13_calendario_promociones_plan",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "FALLAR_SI_INVALIDO": "False"
+        }
+      },
+      "environment_key": "serverless"
+    },
+    {
+      "task_key": "20_features_oro",
+      "notebook_task": {
+        "notebook_path": "__RUTA_NOTEBOOKS__/2_modelos/20_features_oro",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "GENERAR_PRONOSTICO": "True"
+        }
+      },
+      "environment_key": "serverless",
+      "depends_on": [
+        {
+          "task_key": "13_calendario_promociones_plan"
+        }
+      ]
+    }
+  ],
+  "environments": [
+    {
+      "environment_key": "serverless",
+      "spec": {
+        "client": "2",
+        "dependencies": [
+          "openpyxl>=3.1,<4"
+        ]
+      }
+    }
+  ],
+  "queue": {
+    "enabled": true
+  }
+}

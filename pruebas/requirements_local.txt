@@ -1,0 +1,17 @@
+# Entorno local para correr los notebooks con datos sintéticos (Python 3.11, Java 17)
+pyspark==3.5.3
+delta-spark==3.2.1
+pandas>=2.0,<3
+numpy>=1.26,<3
+pyarrow>=14
+scipy
+matplotlib
+scikit-learn>=1.4
+lightgbm>=4.3,<5
+xgboost>=2.0,<4
+catboost>=1.2,<2
+optuna>=3.6,<5
+shap>=0.44,<1
+mlflow>=2.15
+openpyxl>=3.1,<4
+psutil
