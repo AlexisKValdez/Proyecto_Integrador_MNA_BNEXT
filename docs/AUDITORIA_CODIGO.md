@@ -68,7 +68,19 @@ flujo `@challenger → @champion`.
 - Notebooks autocontenidos (las celdas comunes se copian al construir; `%run` queda como opción futura).
 - `03_auditoria_trabajo_previo` y `12_evidencia_calidad` siguen fuera del repositorio público (contienen cifras del negocio).
 
-## 7. Pruebas realizadas
+## 7. Cambios del 4 de noviembre (octubre cargado y promociones con sólo fechas)
+
+- `MESES` incluye `2026-10`; los bloques de prueba pasan a cuatro (`prueba_3` 28-sep, `prueba_4` 12-oct): la prueba no
+  vista cubre del 1-sep al 26-oct con los modelos congelados al 31-ago (mide también cuánto envejece el modelo).
+  Eventos de octubre a diciembre agregados (Halloween, Día de Muertos, Buen Fin, Revolución, Guadalupe, Navidad, fin de año).
+- Notebook 13: `categoria_id = TODAS` (+ `tipo_categoria`) expande una promoción de la que sólo se conocen las fechas a
+  todas las categorías del tipo; `descuento_planeado` vacío se imputa con el descuento histórico mediano de la categoría
+  (`descuento_imputado = 1`); bloque **comentado** para cargar el catálogo de Bnext como tabla/archivo
+  (`ORIGEN_CATALOGO_BNEXT`, `MAPEO_COLUMNAS_BNEXT`) cuando exista.
+- Tablero: `gold.dash_serie_tiempo` trae `pct_series_con_promo` (observada antes del origen, planeada después) y el
+  tablero lo grafica junto a la venta.
+
+## 8. Pruebas realizadas
 
 Toda la cadena 00 → 02 → 08 → 09 → 10 → 11 → 13 → 20 → `Avance5.43` → 22 → 23 → 24 → 30 → 31 → 40 corrió en Spark local
 con datos sintéticos simulando serverless (sin `persist`, configuraciones restringidas, `dbutils.widgets` emulado con

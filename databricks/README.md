@@ -34,18 +34,18 @@ espacio privado de Databricks.
 
 ## Configuración común
 
-La primera celda de cada notebook es la misma: catálogo y esquema, `MESES` (`2026-03` … `2026-09`), los cortes
+La primera celda de cada notebook es la misma: catálogo y esquema, `MESES` (`2026-03` … `2026-10`), los cortes
 walk-forward fijos y `parametro()`, que lee los parámetros de Job o widgets con el mismo nombre que las variables.
 
 | Bloque | Origen | Uso |
 | --- | --- | --- |
 | `ajuste` | 2026-05-20 | ajuste de hiperparámetros |
 | `corte_1` … `corte_4` | 06-03, 06-17, 07-01, 08-17 | desarrollo (los del Avance 4) |
-| `prueba_1`, `prueba_2` | 08-31, 09-14 | datos no vistos (septiembre) |
+| `prueba_1` … `prueba_4` | 08-31, 09-14, 09-28, 10-12 | datos no vistos (septiembre y octubre; modelos congelados al 31-ago) |
 
 ## Orden
 
-- **Mes nuevo**: J1 (02 → 08 → 09 → 10 → 11) → J2 (13 → 20) → J4 (22 → 30 → 31 → 40) → J5 (23 → 40).
+- **Mes nuevo**: agregar el mes a `MESES` (celda de configuración) → J1 (02 → 08 → 09 → 10 → 11) → J2 (13 → 20) → J4 (22 → 30 → 31 → 40) → J5 (23 → 40).
 - **Reentrenar**: J3 (`Avance5.43`) → 24 → J4.
 - Definiciones de los Jobs y parámetros: `jobs/LEEME.md`. Operación paso a paso: `docs/RUNBOOK.md`.
 

@@ -23,10 +23,24 @@ El notebook 13 valida el archivo (fechas, categorías, alcances, descuentos), re
 construye el plan histórico a partir de las promociones observadas y escribe las tablas
 `silver.calendario_promociones_plan` y `silver.calendario_promociones_plan_dia`.
 
+## Si sólo se conocen las fechas
+
+Pon `categoria_id = TODAS` (y `tipo_categoria = mercancia` si aplica sólo a mercancía), deja `descuento_planeado` vacío
+y `fuente = bnext`. El notebook 13 expande la fila a todas las categorías de ese tipo y le pone a cada una su descuento
+histórico mediano (`descuento_imputado = 1`). El efecto queda diluido (el modelo aprendió promociones por categoría);
+cuando llegue el detalle, sustituye esas filas por una por categoría. La fila `PH-2026-11-SOLO-FECHAS` de la plantilla es
+el ejemplo.
+
+## Cuando llegue el catálogo completo de Bnext
+
+Dos caminos: (1) vaciarlo a este Excel con las columnas del contrato, o (2) descomentar el bloque «CUANDO BNEXT ENTREGUE
+SU CATÁLOGO» al inicio de la sección 2 del notebook 13, indicar dónde está (tabla, parquet o CSV) y mapear sus nombres de
+columna en `MAPEO_COLUMNAS_BNEXT`. Todo lo demás (validación, histórico, tablas, pronóstico, what-if) sigue igual.
+
 ## Por qué importa `fecha_publicacion`
 
 El modelo sólo usa, en cada fecha de pronóstico, las promociones que ya estaban publicadas. Así las variables del
-calendario no filtran información del futuro en los cortes históricos ni en la prueba de septiembre, y lo que se mide
+calendario no filtran información del futuro en los cortes históricos ni en la prueba no vista, y lo que se mide
 es lo que el negocio realmente sabría al pronosticar.
 
 ## Regenerar la plantilla

@@ -71,7 +71,7 @@ hallazgo(f"Comparativa de desarrollo: {n_hom} ensambles homogéneos y {n_het} he
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 5.3 Prueba en datos no vistos (septiembre)
+# MAGIC ### 5.3 Prueba en datos no vistos (septiembre y octubre)
 # MAGIC Todos los modelos se entrenaron con datos hasta el 31 de agosto y se congelaron; pronostican del 1 al 28 de
 # MAGIC septiembre sin reentrenar. La tabla conserva el **orden de desarrollo** (no se reordena con la prueba, para no elegir
 # MAGIC con ella). `diferencia` = WMAPE en prueba − WMAPE en desarrollo: un valor cercano a cero indica que el desempeño se
@@ -97,13 +97,13 @@ if HAY_PRUEBA:
     from scipy.stats import spearmanr
     candidatos = NV.loc[~NV.tipo.isin(["referencia", "diagnostico"])]
     rho = spearmanr(candidatos["wmape_desarrollo"], candidatos["wmape_prueba"]).correlation if len(candidatos) > 2 else np.nan
-    hallazgo(f"Datos no vistos (septiembre): {AGG_LABELS[MODELO_FINAL]} WMAPE {nv.loc[MODELO_FINAL, 'wmape_prueba']:.4f} "
+    hallazgo(f"Datos no vistos (septiembre–octubre): {AGG_LABELS[MODELO_FINAL]} WMAPE {nv.loc[MODELO_FINAL, 'wmape_prueba']:.4f} "
              f"({nv.loc[MODELO_FINAL, 'mejora_vs_ingenuo_prueba']:+.1%} contra el ingenuo, {nv.loc['B0_Ingenuo', 'wmape_prueba']:.4f}; "
              f"sesgo {nv.loc[MODELO_FINAL, 'sesgo_prueba_pct']:+.2f} %); en desarrollo tenía {nv.loc[MODELO_FINAL, 'wmape_desarrollo']:.4f} "
-             f"(diferencia {nv.loc[MODELO_FINAL, 'diferencia']:+.4f}). El orden de los modelos se sostiene en septiembre "
+             f"(diferencia {nv.loc[MODELO_FINAL, 'diferencia']:+.4f}). El orden de los modelos se sostiene en la prueba "
              f"(correlación de rangos desarrollo–prueba {rho:.2f}).")
 else:
-    print("Esta corrida no tiene bloques de prueba (la Oro no incluye septiembre).")
+    print("Esta corrida no tiene bloques de prueba (la Oro no incluye los meses de prueba).")
 
 # COMMAND ----------
 
@@ -222,7 +222,7 @@ hallazgo(f"La corrida tardó {float(RESUMEN_C['minutos_modelado']):.0f} min de m
 # MAGIC Pesos fijados antes de ver resultados: error 35 %, estabilidad 10 %, sesgo 10 %, error en mercancía 10 %, costo de
 # MAGIC reentrenamiento 15 % (no penaliza mientras quepa en el Job mensual), interpretabilidad 10 % y operabilidad 10 %. El
 # MAGIC error se puntúa como mejora sobre el ingenuo relativa a la mejor mejora. La elección quedó registrada en la bitácora
-# MAGIC **antes** de evaluar septiembre.
+# MAGIC **antes** de evaluar los bloques de prueba.
 
 # COMMAND ----------
 

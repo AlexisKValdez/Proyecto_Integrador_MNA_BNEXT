@@ -1,5 +1,11 @@
 # Cambios
 
+## v6.1 · Octubre y promociones con sólo fechas (4-nov-2026)
+- `MESES` hasta `2026-10`; cuatro bloques de prueba (1-sep a 26-oct); eventos de octubre a diciembre.
+- Calendario: `categoria_id = TODAS` con `tipo_categoria`, imputación del descuento histórico, bloque comentado para el
+  catálogo de Bnext; plantilla con columna `tipo_categoria` y ejemplo de sólo fechas.
+- Tablero: fracción de series con promoción (observada/planeada) en la serie de tiempo.
+
 ## v6.0 · Avance 6 (noviembre de 2026)
 - Operación: `22_pronostico_operativo` (inferencia con el modelo registrado), `23_monitoreo` (acierto, PSI, alertas),
   `24_promocion_modelo` (`@challenger` → `@champion` con aprobaciones en tabla).

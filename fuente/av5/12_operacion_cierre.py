@@ -35,7 +35,7 @@ if existe(TABLA_MONITOREO):
         alertas = MON[["alerta_error", "alerta_sesgo", "alerta_cobertura"]].sum()
         mostrar_publico(MON.sort_values(["semana", "region", "tipo_categoria"]).head(30), "Monitoreo por semana × región × tipo (prueba)",
                         formatos={"wmape": "dec4", "sesgo_pct": "dec2", "cobertura": "pct"})
-        hallazgo(f"Monitoreo de septiembre: {len(MON)} combinaciones semana × región × tipo; alertas de error {int(alertas['alerta_error'])}, "
+        hallazgo(f"Monitoreo de la prueba no vista: {len(MON)} combinaciones semana × región × tipo; alertas de error {int(alertas['alerta_error'])}, "
                  f"de sesgo {int(alertas['alerta_sesgo'])} y de cobertura {int(alertas['alerta_cobertura'])}.")
 
 # COMMAND ----------
@@ -56,7 +56,7 @@ if existe(TABLA_MONITOREO):
 # MAGIC conocía `DIAS_ANTICIPACION_HISTORICO` días antes de empezar. Esa suposición queda declarada en la tabla (`fuente`).
 # MAGIC
 # MAGIC **Sin fuga.** Cada promoción trae `fecha_publicacion`; en cada origen T sólo cuentan las publicadas en o antes de T.
-# MAGIC Por eso las variables `f_*` son legítimas en los cortes históricos y en la prueba de septiembre.
+# MAGIC Por eso las variables `f_*` son legítimas en los cortes históricos y en la prueba no vista (septiembre–octubre).
 # MAGIC
 # MAGIC **Para actualizar el plan**: editar el Excel, volver a subirlo al volumen y correr `13`; el pronóstico operativo
 # MAGIC (`22_pronostico_operativo`) y el what-if (`30`) toman el plan nuevo sin reentrenar.
@@ -97,7 +97,7 @@ print("\nComparativa de desarrollo (ordenada por WMAPE medio de los cortes):")
 print(COMP[["posicion", "etiqueta", "tipo", "wmape_media_cortes", "wmape_desviacion_cortes", "mejora_vs_ingenuo", "sesgo_medio_pct",
             "wmape_mercancia", "min_entrenamiento_por_corte"]].to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 if HAY_PRUEBA:
-    print("\nPrueba no vista (septiembre):")
+    print("\nPrueba no vista (septiembre–octubre):")
     print(NV.drop(columns=["modelo"]).to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 if "ajuste_resumen" in C:
     print("\nAjuste fino:")
@@ -106,7 +106,7 @@ print("\nMatriz de decisión:")
 print(DEC.drop(columns=[c for c in ("modelo_final", "argumento") if c in DEC]).to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 print(f"\n{ARGUMENTO_FINAL}")
 if "cuantiles" in C:
-    print("\nIntervalos (septiembre):")
+    print("\nIntervalos (prueba no vista):")
     print(GQ.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 if COMPUERTA_C:
     print(f"\nCompuerta: {COMPUERTA_C['desarrollo_status']} · registro: {COMPUERTA_C['registry_action']} · motivos de bloqueo: "

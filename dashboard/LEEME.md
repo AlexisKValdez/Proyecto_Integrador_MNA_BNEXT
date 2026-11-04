@@ -32,6 +32,19 @@ en 20–30 minutos con las consultas de `consultas.sql`: cada bloque es un *data
 en la tabla de arriba (contadores, barras por región y tipo, líneas de venta real vs. pronóstico coloreadas por
 `tipo_dato`, tablas con filtros por región, zona, tipo, categoría y tienda).
 
+## Tablero AI/BI, Databricks App o React: qué es cada cosa
+
+| Opción | Qué es | Qué se necesita | Cuándo conviene |
+| --- | --- | --- | --- |
+| **Tablero AI/BI** (lo entregado) | Tablero nativo de Databricks: se construye con consultas SQL, sin programar; filtros, gráficas, tablas; se publica y comparte dentro del workspace; se refresca al consultar | SQL warehouse; importar el `.lvdash.json` | Siempre primero: cubre las 7 vistas, cero código de interfaz, datos dentro de Databricks |
+| **Databricks App (Streamlit o Dash, en Python)** | Aplicación web alojada en el workspace que lee las tablas `gold` por el SQL warehouse; permite controles propios (p. ej. un what-if con deslizadores que re-puntúe el modelo) | Databricks Apps habilitado por el administrador, SQL warehouse, un *service principal* con permiso de lectura | Cuando el tablero se queda corto en interacción (what-if a la medida, formularios) |
+| **Databricks App con React** | Lo mismo, con la interfaz escrita en React (JavaScript) y un *backend* (FastAPI o Node) que consulta Databricks | Lo anterior + alguien que programe React; compilar la app y desplegarla | Cuando se quiere una interfaz de producto (marca, navegación propia); es la opción más costosa y no aporta más datos ni más modelo |
+
+React no es automatización: es sólo la capa visual. La automatización del proyecto son los **Jobs** (ingesta,
+features, entrenamiento, inferencia, monitoreo) y las tablas que dejan listas; cualquiera de las tres interfaces lee las
+mismas tablas `gold.dash_*`. Para el curso, el tablero AI/BI es suficiente; una App de Streamlit es el siguiente paso
+natural si hay tiempo (un día de trabajo); React sólo si el negocio lo pide.
+
 ## Genie (opcional)
 
 Con las mismas tablas se puede crear un **Genie space** (Databricks → Genie → New) para preguntar en lenguaje natural

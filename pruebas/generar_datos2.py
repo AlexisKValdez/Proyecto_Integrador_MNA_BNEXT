@@ -16,7 +16,7 @@ BASE = sys.argv[1]
 VOL = os.path.join(BASE, "Volumes", "spark_catalog", "maestria")
 shutil.rmtree(os.path.join(BASE, "Volumes"), ignore_errors=True)
 rng = np.random.default_rng(7)
-MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"]
+MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]
 TIENDAS = list(range(1001, 1031))
 CATS = {101: "CERVEZA", 102: "BOTANAS", 5: "REFRESCOS", 548: "YOGURT", 715: "YOGURTH", 617: None, 758: "REFRESCO",
         10004: "SERVICIOS ARCADIAL", 677: "GENERICO"}
@@ -34,7 +34,7 @@ CAMPANAS = []
 _pid = 2000
 for _i, _cat in enumerate(CATS):
     _ini = dt.date(2026, 3, 1) + dt.timedelta(days=5 * _i)
-    while _ini < dt.date(2026, 10, 1):
+    while _ini < dt.date(2026, 11, 1):
         _dur = 10 + (_i % 3) * 4
         CAMPANAS.append((_pid, _cat, _ini, _ini + dt.timedelta(days=_dur - 1), [0.1, 0.2, 0.3][_pid % 3]))
         _pid += 1

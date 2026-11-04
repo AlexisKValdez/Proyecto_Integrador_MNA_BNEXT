@@ -7,7 +7,9 @@ números son notebooks de `mna_equipo43_avance6`.
 
 1. Confirmar que el volumen `/Volumes/modeladoprescriptivoventas/maestria/<AAAA-MM>/` tiene los parquet.
 2. Agregar el mes a `MESES` en la celda de configuración de los notebooks **sólo si todavía no está** (hoy llega hasta
-   `2026-09`; para octubre: añadir `"2026-10"` y volver a importar o editar con Git folder).
+   `2026-10`; para noviembre: añadir `"2026-11"` en `fuente/partes/config.py` y reconstruir, o editar la celda en todos
+   los notebooks). Los bloques de prueba (`ORIGENES_PRUEBA`) son fijos; un mes nuevo sólo extiende la historia y mueve
+   el origen del pronóstico operativo.
 3. Correr **J1 ingesta_mes** con `MES = AAAA-MM`. El Job falla si `11` encuentra una regla crítica rota: leer el
    RESUMEN PARA REVISIÓN del 11, corregir (o pedir a Bnext la entrega faltante) y repetir.
 4. Correr **J2 features** (calendario + Oro). Revisar en el 20 la prueba anti-fuga (`PASA`) y en `mlops.oro_resumen`
@@ -39,6 +41,16 @@ WHERE aspecto = 'alcance_categoria';
 ```
 
 ## 4. Cambia el calendario de promociones
+
+**Si Bnext sólo da fechas** (sin categoría ni descuento): una fila por promoción con `categoria_id = TODAS`, el
+`tipo_categoria` al que aplica (`mercancia` si no se sabe), `descuento_planeado` vacío y `fuente = bnext`. El notebook 13
+la expande a todas las categorías de ese tipo y le imputa el descuento histórico mediano de cada categoría
+(`descuento_imputado = 1`). Cuando llegue el detalle, se sustituyen esas filas por una por categoría.
+
+**Cuando Bnext entregue su catálogo completo** (tabla o archivo con categoría, descuento y mecánica): o se vacía al Excel
+con las columnas del contrato, o se usa el bloque comentado al inicio de la sección 2 del notebook 13
+(`ORIGEN_CATALOGO_BNEXT` + `MAPEO_COLUMNAS_BNEXT`): se descomenta, se mapean los nombres de columna de Bnext y el resto del
+notebook sigue igual. Después: 13 → J4; y J3 cuando ya exista historia con el plan real.
 
 1. Editar `outputs/calendario/calendario_promociones_plan.xlsx` (hoja `promociones`); poner `fuente = bnext` en las
    filas reales y borrar las `placeholder`. Los identificadores de categoría están en `catalogo_categorias.csv` de la

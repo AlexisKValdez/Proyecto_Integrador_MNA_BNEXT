@@ -12,28 +12,29 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-COLUMNAS = ["promo_id", "nombre", "inicio_planeado", "fin_planeado", "categoria_id", "categoria_nombre", "tienda", "zona",
+COLUMNAS = ["promo_id", "nombre", "inicio_planeado", "fin_planeado", "categoria_id", "categoria_nombre", "tipo_categoria", "tienda", "zona",
             "region", "descuento_planeado", "tipo_mecanica", "fecha_publicacion", "fuente", "comentario"]
 # Placeholder INVENTADO (sustituir): promociones nacionales por categoría para oct–dic 2026. Los nombres de categoría se
 # traducen a categoria_id con silver.catalogo_categorias; los que no existan se reportan y se omiten.
 FILAS = [
-    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "REFRESCOS", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA: cae dentro del horizonte del pronóstico de octubre"),
-    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "CERVEZA", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA"),
-    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "BOTANAS", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA: sustituir por el plan real"),
-    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "CACAHUATE Y SEMILLAS", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA"),
-    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "PAN Y GALLETA", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
-    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "CAFES", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "CERVEZA", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA; fechas del Buen Fin por confirmar"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "REFRESCOS", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "BOTANAS", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "AGUAS", "", "", "", 0.15, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
-    ("PH-2026-11-2X1-YOGURT", "2x1 yogurt noviembre", "2026-11-17", "2026-11-30", "", "YOGURT", "", "", "", 0.50, "lleva 2 paga 1", "2026-11-01", "placeholder", "INVENTADA; 2x1 ≈ 50 % de descuento"),
-    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "CERVEZA", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
-    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "BOTANAS", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
-    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "REFRESCOS", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
-    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CERVEZA", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA; se traslapa con posadas a propósito"),
-    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CHICHARRONES", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA"),
-    ("PH-2026-11-REGIONAL-EJEMPLO", "Ejemplo de alcance regional", "2026-11-20", "2026-11-22", "", "PALOMITAS", "", "", "NORTE", 0.20, "descuento", "2026-11-05", "placeholder", "INVENTADA: muestra cómo acotar por región (si la región no existe, no aplica a ninguna tienda)"),
+    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "REFRESCOS", "", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA: cae dentro del horizonte del pronóstico de octubre"),
+    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "CERVEZA", "", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA"),
+    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "BOTANAS", "", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA: sustituir por el plan real"),
+    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "CACAHUATE Y SEMILLAS", "", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA"),
+    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "PAN Y GALLETA", "", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
+    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "CAFES", "", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "CERVEZA", "", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA; fechas del Buen Fin por confirmar"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "REFRESCOS", "", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "BOTANAS", "", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "AGUAS", "", "", "", "", 0.15, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
+    ("PH-2026-11-2X1-YOGURT", "2x1 yogurt noviembre", "2026-11-17", "2026-11-30", "", "YOGURT", "", "", "", "", 0.50, "lleva 2 paga 1", "2026-11-01", "placeholder", "INVENTADA; 2x1 ≈ 50 % de descuento"),
+    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "CERVEZA", "", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
+    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "BOTANAS", "", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
+    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "REFRESCOS", "", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
+    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CERVEZA", "", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA; se traslapa con posadas a propósito"),
+    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CHICHARRONES", "", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA"),
+    ("PH-2026-11-REGIONAL-EJEMPLO", "Ejemplo de alcance regional", "2026-11-20", "2026-11-22", "", "PALOMITAS", "", "", "", "NORTE", 0.20, "descuento", "2026-11-05", "placeholder", "INVENTADA: muestra cómo acotar por región (si la región no existe, no aplica a ninguna tienda)"),
+    ("PH-2026-11-SOLO-FECHAS", "Promoción de la que sólo se conocen las fechas (ejemplo)", "2026-11-05", "2026-11-08", "TODAS", "", "mercancia", "", "", "", "", "descuento", "2026-10-25", "placeholder", "INVENTADA: ejemplo de fechas sin categoría ni descuento; se expande a toda la mercancía con descuento imputado"),
 ]
 INSTRUCCIONES = [
     "CALENDARIO DE PROMOCIONES PLANEADAS · Equipo 43",
@@ -43,6 +44,8 @@ INSTRUCCIONES = [
     "   categoria_nombre se traduce a categoria_id con silver.catalogo_categorias (mismo texto, mayúsculas); el notebook 13",
     "   deja el catálogo en outputs/calendario/catalogo_categorias.csv para consultarlo.",
     "3. Alcance: tienda, zona y region vacíos = nacional. Llena sólo el nivel que aplique (p. ej. region = NORTE).",
+    "   Si SÓLO conoces las fechas: categoria_id = TODAS (y tipo_categoria = mercancia si aplica sólo a mercancía); el",
+    "   notebook la expande a todas las categorías y, si no hay descuento, usa el descuento histórico de cada categoría.",
     "4. descuento_planeado en fracción (0.15 = 15 %). Para 2x1 escribe 0.50; para 3x2, 0.33. Vacío = se usa 0.",
     "5. fecha_publicacion = desde cuándo se conoce el plan. Vacío = inicio_planeado − 14 días. Importa para el histórico:",
     "   el modelo sólo usa en cada fecha de pronóstico las promociones ya publicadas (así no hay fuga).",
@@ -66,7 +69,7 @@ def main(destino):
         ws.cell(row=1, column=i).font = Font(bold=True, color="FFFFFF")
         ws.cell(row=1, column=i).fill = PatternFill("solid", fgColor="1F4E78")
         ws.column_dimensions[get_column_letter(i)].width = max(14, min(42, len(c) + 4))
-    ws.column_dimensions["N"].width = 60
+    ws.column_dimensions["O"].width = 60
     ws.freeze_panes = "A2"
     wi = wb.create_sheet("instrucciones")
     for linea in INSTRUCCIONES:

@@ -52,6 +52,11 @@ INCLUIR_HISTORICO_OBSERVADO = parametro("INCLUIR_HISTORICO_OBSERVADO", True)
 DIAS_ANTICIPACION_DEFECTO = parametro("DIAS_ANTICIPACION_DEFECTO", 14)      # fecha_publicacion si el archivo no la trae
 DIAS_ANTICIPACION_HISTORICO = parametro("DIAS_ANTICIPACION_HISTORICO", 14)  # cuántos días antes se "conocía" una promoción observada
 FALLAR_SI_INVALIDO = parametro("FALLAR_SI_INVALIDO", False)                 # True en Jobs: detenerse si el archivo tiene errores
+IMPUTAR_DESCUENTO = parametro("IMPUTAR_DESCUENTO", True)
+# True → si una fila no trae descuento_planeado, se usa el descuento histórico mediano de la categoría (de las promociones
+#        observadas); así una promoción de la que sólo se conocen las fechas entra al modelo con un descuento plausible.
+TIPO_TODAS_DEFECTO = parametro("TIPO_TODAS_DEFECTO", "mercancia")
+# A qué tipo de categoría se expande una fila con categoria = TODAS cuando no indica tipo_categoria ("" = todos los tipos).
 TABLA_VERSIONES = tabla("mlops", "calendario_plan_versiones")
 print("Archivo del plan:", ARCHIVO_CALENDARIO)
 
@@ -68,23 +73,24 @@ import io
 COLUMNAS_PLAN = list(ESQUEMA_CALENDARIO_PROMOS)
 # Placeholder INVENTADO para arrancar (las mismas filas de calendario/calendario_promociones_plan.xlsx del repositorio).
 PLANTILLA_PLACEHOLDER = [
-    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "REFRESCOS", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA: cae dentro del horizonte del pronóstico de octubre"),
-    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "CERVEZA", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA"),
-    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "BOTANAS", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA: sustituir por el plan real"),
-    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "CACAHUATE Y SEMILLAS", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA"),
-    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "PAN Y GALLETA", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
-    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "CAFES", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "CERVEZA", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA; fechas del Buen Fin por confirmar"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "REFRESCOS", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "BOTANAS", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
-    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "AGUAS", "", "", "", 0.15, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
-    ("PH-2026-11-2X1-YOGURT", "2x1 yogurt noviembre", "2026-11-17", "2026-11-30", "", "YOGURT", "", "", "", 0.50, "lleva 2 paga 1", "2026-11-01", "placeholder", "INVENTADA; 2x1 ≈ 50 % de descuento"),
-    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "CERVEZA", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
-    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "BOTANAS", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
-    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "REFRESCOS", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
-    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CERVEZA", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA; se traslapa con posadas a propósito"),
-    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CHICHARRONES", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA"),
-    ("PH-2026-11-REGIONAL-EJEMPLO", "Ejemplo de alcance regional", "2026-11-20", "2026-11-22", "", "PALOMITAS", "", "", "NORTE", 0.20, "descuento", "2026-11-05", "placeholder", "INVENTADA: ejemplo de alcance por región"),
+    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "REFRESCOS", "", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA: cae dentro del horizonte del pronóstico de octubre"),
+    ("PH-2026-10-OTONO", "Arranque de otoño refrescos y cerveza", "2026-10-02", "2026-10-11", "", "CERVEZA", "", "", "", "", 0.10, "descuento", "2026-09-20", "placeholder", "INVENTADA"),
+    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "BOTANAS", "", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA: sustituir por el plan real"),
+    ("PH-2026-10-HALLOWEEN", "Halloween botanas y dulces", "2026-10-26", "2026-10-31", "", "CACAHUATE Y SEMILLAS", "", "", "", "", 0.10, "descuento", "2026-10-10", "placeholder", "INVENTADA"),
+    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "PAN Y GALLETA", "", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
+    ("PH-2026-11-DIA-MUERTOS", "Día de Muertos pan y café", "2026-10-30", "2026-11-02", "", "CAFES", "", "", "", "", 0.15, "descuento", "2026-10-15", "placeholder", "INVENTADA"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "CERVEZA", "", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA; fechas del Buen Fin por confirmar"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "REFRESCOS", "", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "BOTANAS", "", "", "", "", 0.20, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
+    ("PH-2026-11-BUEN-FIN", "El Buen Fin 2026", "2026-11-13", "2026-11-16", "", "AGUAS", "", "", "", "", 0.15, "descuento", "2026-10-20", "placeholder", "INVENTADA"),
+    ("PH-2026-11-2X1-YOGURT", "2x1 yogurt noviembre", "2026-11-17", "2026-11-30", "", "YOGURT", "", "", "", "", 0.50, "lleva 2 paga 1", "2026-11-01", "placeholder", "INVENTADA; 2x1 ≈ 50 % de descuento"),
+    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "CERVEZA", "", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
+    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "BOTANAS", "", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
+    ("PH-2026-12-POSADAS", "Posadas cerveza y botanas", "2026-12-12", "2026-12-24", "", "REFRESCOS", "", "", "", "", 0.10, "descuento", "2026-11-25", "placeholder", "INVENTADA"),
+    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CERVEZA", "", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA; se traslapa con posadas a propósito"),
+    ("PH-2026-12-NAVIDAD", "Navidad y Año Nuevo", "2026-12-20", "2026-12-31", "", "CHICHARRONES", "", "", "", "", 0.15, "descuento", "2026-12-01", "placeholder", "INVENTADA"),
+    ("PH-2026-11-REGIONAL-EJEMPLO", "Ejemplo de alcance regional", "2026-11-20", "2026-11-22", "", "PALOMITAS", "", "", "", "NORTE", 0.20, "descuento", "2026-11-05", "placeholder", "INVENTADA: ejemplo de alcance por región"),
+    ("PH-2026-11-SOLO-FECHAS", "Promoción de la que sólo se conocen las fechas (ejemplo)", "2026-11-05", "2026-11-08", "TODAS", "", "mercancia", "", "", "", "", "descuento", "2026-10-25", "placeholder", "INVENTADA: ejemplo de fechas sin categoría ni descuento; se expande a toda la mercancía con descuento imputado"),
 ]
 
 
@@ -134,11 +140,53 @@ print(f"Archivo: {os.path.basename(ARCHIVO_CALENDARIO)} · versión {VERSION_PLA
 
 # COMMAND ----------
 
+# ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# CUANDO BNEXT ENTREGUE SU CATÁLOGO DE PROMOCIONES COMO TABLA O ARCHIVO (en lugar del Excel): descomentar y ajustar
+# ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# 1. Indicar dónde está el catálogo (tabla de Unity Catalog, parquet o CSV en el volumen):
+# ORIGEN_CATALOGO_BNEXT = tabla("silver", "promociones_bnext")          # o volumen("outputs", "calendario", "catalogo_bnext.csv")
+# 2. Mapear los nombres de columnas de Bnext a las del contrato (ESQUEMA_CALENDARIO_PROMOS); las que no existan se dejan "":
+# MAPEO_COLUMNAS_BNEXT = {
+#     "promo_id": "id_promocion",            # identificador de la promoción en Bnext
+#     "nombre": "nombre_promocion",
+#     "inicio_planeado": "fecha_inicio",
+#     "fin_planeado": "fecha_fin",
+#     "categoria_id": "id_categoria",        # o "categoria_nombre": "categoria" si viene el nombre; "TODAS" si aplica a todas
+#     "tienda": "",                          # vacío = nacional; o "store_code" si viene por tienda
+#     "zona": "", "region": "",
+#     "descuento_planeado": "porcentaje_descuento",   # 0–1 o 0–100 (el notebook lo normaliza); vacío = se imputa
+#     "tipo_mecanica": "mecanica",
+#     "fecha_publicacion": "fecha_aprobacion",        # vacío = inicio − DIAS_ANTICIPACION_DEFECTO
+#     "comentario": "",
+# }
+# 3. Leer, renombrar y usar en lugar del Excel (todo lo demás del notebook sigue igual):
+# if ORIGEN_CATALOGO_BNEXT.count(".") == 2:
+#     crudo = spark.table(ORIGEN_CATALOGO_BNEXT).toPandas()
+# elif ORIGEN_CATALOGO_BNEXT.lower().endswith(".csv"):
+#     crudo = pd.read_csv(ORIGEN_CATALOGO_BNEXT, dtype=str, keep_default_na=False)
+# else:
+#     crudo = spark.read.parquet(ORIGEN_CATALOGO_BNEXT).toPandas()
+# PLAN_CRUDO = pd.DataFrame({c: (crudo[origen].astype(str) if origen in crudo.columns else "") for c, origen in MAPEO_COLUMNAS_BNEXT.items()})
+# for c in COLUMNAS_PLAN:
+#     if c not in PLAN_CRUDO.columns:
+#         PLAN_CRUDO[c] = ""
+# PLAN_CRUDO["fuente"] = "bnext"
+# PLAN_CRUDO = PLAN_CRUDO[COLUMNAS_PLAN]
+# VERSION_PLAN = hashlib.sha256(PLAN_CRUDO.to_csv(index=False).encode("utf-8")).hexdigest()[:12]
+# print(f"Catálogo de Bnext: {len(PLAN_CRUDO)} filas · versión {VERSION_PLAN}")
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## 2. Validación y traducción de categorías y alcances
 # MAGIC Se traducen `categoria_nombre` → `categoria_id` con el catálogo, se completan `fecha_publicacion` y `descuento_planeado`,
 # MAGIC se revisan fechas, rangos y alcances (región, zona o tienda que existan). Los errores se listan sin datos sensibles;
 # MAGIC las filas con error se omiten (o detienen el notebook si `FALLAR_SI_INVALIDO = True`).
+# MAGIC
+# MAGIC **Si sólo se conocen las fechas** de una promoción: `categoria_id = TODAS` (opcionalmente `tipo_categoria = mercancia`)
+# MAGIC la expande a todas las categorías de ese tipo y, si no trae descuento, se le imputa el descuento histórico mediano de
+# MAGIC cada categoría (`descuento_imputado = 1`). Es una aproximación declarada: cuando llegue el detalle por categoría, se
+# MAGIC sustituyen esas filas.
 
 # COMMAND ----------
 
@@ -158,9 +206,36 @@ nombre_a_id = dict(zip(CAT["nombre"], CAT["categoria_id"]))
 ids_validos = set(CAT["categoria_id"])
 plan = PLAN_CRUDO.copy()
 plan["fila"] = range(2, len(plan) + 2)      # número de fila en el archivo (encabezado = 1)
+# ---- TODAS: una promoción de la que sólo se conocen las fechas se expande a todas las categorías (del tipo indicado)
+es_todas = (plan["categoria_id"].str.upper() == "TODAS") | ((plan["categoria_id"] == "") & (plan["categoria_nombre"].str.upper() == "TODAS"))
+if es_todas.any():
+    tipo_filtro = plan["tipo_categoria"].str.lower().where(plan["tipo_categoria"] != "", TIPO_TODAS_DEFECTO)
+    expandidas = []
+    for i in plan.index[es_todas]:
+        cats = CAT[CAT["tipo_categoria"].str.lower() == tipo_filtro[i]] if tipo_filtro[i] else CAT
+        for cid in cats["categoria_id"]:
+            fila = plan.loc[i].copy()
+            fila["categoria_id"], fila["categoria_nombre"] = cid, ""
+            expandidas.append(fila)
+    n_todas = int(es_todas.sum())
+    plan = pd.concat([plan[~es_todas], pd.DataFrame(expandidas)], ignore_index=True)
+    hallazgo(f"{n_todas} filas con categoría TODAS se expandieron a {len(expandidas)} filas promoción × categoría "
+             f"(tipo por defecto: {TIPO_TODAS_DEFECTO or 'todos'}).")
 plan["categoria_id"] = plan["categoria_id"].where(plan["categoria_id"] != "", plan["categoria_nombre"].str.upper().map(nombre_a_id).fillna(""))
 plan["descuento_planeado"] = pd.to_numeric(plan["descuento_planeado"].replace("", np.nan), errors="coerce")
 plan.loc[plan["descuento_planeado"] > 1, "descuento_planeado"] = plan.loc[plan["descuento_planeado"] > 1, "descuento_planeado"] / 100  # 15 → 0.15
+plan["descuento_imputado"] = 0
+if IMPUTAR_DESCUENTO and plan["descuento_planeado"].isna().any() and existe(tabla("silver", "calendario_promociones")):
+    hist = (spark.table(tabla("silver", "calendario_promociones")).select("promo_id", F.col("categoria_id").cast("string").alias("categoria_id"))
+            .join(spark.table(tabla("silver", "promociones")).select("promo_id", "tasa_media"), "promo_id").where(F.col("tasa_media") > 0)
+            .groupBy("categoria_id").agg(F.expr("percentile_approx(tasa_media, 0.5)").alias("descuento_hist")).toPandas())
+    desc_cat = dict(zip(hist["categoria_id"], hist["descuento_hist"]))
+    desc_global = float(hist["descuento_hist"].median()) if len(hist) else 0.0
+    faltante = plan["descuento_planeado"].isna()
+    plan.loc[faltante, "descuento_planeado"] = plan.loc[faltante, "categoria_id"].map(desc_cat).fillna(desc_global)
+    plan.loc[faltante, "descuento_imputado"] = 1
+    hallazgo(f"{int(faltante.sum())} filas sin descuento: se imputó el descuento histórico mediano de su categoría "
+             f"(global {desc_global:.0%}); quedan marcadas con descuento_imputado = 1.")
 plan["descuento_planeado"] = plan["descuento_planeado"].fillna(0.0).clip(0, 1)
 for c in ("inicio_planeado", "fin_planeado", "fecha_publicacion"):
     plan[c] = pd.to_datetime(plan[c].replace("", np.nan), errors="coerce")
@@ -214,7 +289,7 @@ titulo("3. TABLAS DEL PLAN")
 plan_tabla = plan.assign(inicio_planeado=plan["inicio_planeado"].dt.date, fin_planeado=plan["fin_planeado"].dt.date,
                          fecha_publicacion=plan["fecha_publicacion"].dt.date, version_plan=VERSION_PLAN, fecha_carga=pd.Timestamp.now())[
     ["promo_id", "nombre", "inicio_planeado", "fin_planeado", "categoria_id", "tienda", "zona", "region", "alcance",
-     "descuento_planeado", "tipo_mecanica", "fecha_publicacion", "fuente", "comentario", "version_plan", "fecha_carga"]]
+     "descuento_planeado", "descuento_imputado", "tipo_mecanica", "fecha_publicacion", "fuente", "comentario", "version_plan", "fecha_carga"]]
 guardar(plan_tabla, "silver", "calendario_promociones_plan",
         "Plan de promociones: una fila por promocion x categoria x alcance, leido del archivo editable del volumen (13)", modo="overwrite")
 comentar_columnas(TABLA_CALENDARIO_PLAN, {k: v for k, v in ESQUEMA_CALENDARIO_PROMOS.items()})

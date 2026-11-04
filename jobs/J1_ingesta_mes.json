@@ -101,7 +101,7 @@
   "parameters": [
     {
       "name": "MES",
-      "default": "2026-09"
+      "default": "2026-10"
     }
   ]
 }

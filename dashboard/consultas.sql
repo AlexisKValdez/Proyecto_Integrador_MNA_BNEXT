@@ -8,7 +8,7 @@ FROM modeladoprescriptivoventas.maestria.gold_dash_resumen_ejecutivo;
 
 -- ds_serie · Serie de tiempo
 SELECT nivel, tienda, categoria_id, categoria_nombre, region, zona, tipo_categoria, fecha, tipo_dato,
-       real, pronostico, p10, p90, COALESCE(real, pronostico) AS venta, tiendas
+       real, pronostico, p10, p90, COALESCE(real, pronostico) AS venta, tiendas, pct_series_con_promo
 FROM modeladoprescriptivoventas.maestria.gold_dash_serie_tiempo;
 
 -- ds_precision · Precisión del modelo

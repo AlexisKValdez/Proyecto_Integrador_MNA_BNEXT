@@ -58,7 +58,8 @@ PANEL = leer_tabla(TABLA_PANEL, "09_panel_diario")
 DESDE_HIST = (pd.Timestamp(ORIGEN) - pd.Timedelta(days=DIAS_HISTORIA - 1)).date()
 REAL = (PANEL.where((F.col("fecha") >= F.lit(DESDE_HIST)) & (F.col("fecha") <= F.lit(ORIGEN)) & (F.col("sin_datos") == 0))
         .select(F.col("tienda").cast("string").alias("tienda"), F.col("categoria_id").cast("string").alias("categoria_id"), "fecha",
-                F.col("venta").alias("real"), "tipo_categoria", F.col("tienda_inactiva"))
+                F.col("venta").alias("real"), "tipo_categoria", F.col("tienda_inactiva"),
+                (F.coalesce(F.col("promos_vigentes"), F.lit(0)) > 0).cast("double").alias("con_promo"))
         .join(TIENDAS, "tienda", "left").join(CAT, "categoria_id", "left"))
 print(f"Origen {ORIGEN} · historia desde {DESDE_HIST}")
 NIVELES = {"nacional": [], "region": ["region"], "tipo_categoria": ["tipo_categoria"], "region_tipo": ["region", "tipo_categoria"],
@@ -83,11 +84,13 @@ def con_llaves(df, dims):
 titulo("1. SERIE DE TIEMPO")
 partes = []
 for nivel, dims in NIVELES.items():
-    h = (REAL.groupBy(*dims, "fecha").agg(F.sum("real").alias("real"), F.countDistinct("tienda").alias("tiendas"))
+    h = (REAL.groupBy(*dims, "fecha").agg(F.sum("real").alias("real"), F.countDistinct("tienda").alias("tiendas"),
+                                          F.avg("con_promo").alias("pct_series_con_promo"))
          .withColumn("pronostico", F.lit(None).cast("double")).withColumn("p10", F.lit(None).cast("double")).withColumn("p90", F.lit(None).cast("double"))
          .withColumn("tipo_dato", F.lit("real")))
     p = (P.groupBy(*dims, F.col("fecha_objetivo").alias("fecha")).agg(F.sum("prediccion_puntual").alias("pronostico"), F.sum("p10").alias("p10"), F.sum("p90").alias("p90"),
-                                                                     F.countDistinct("tienda").alias("tiendas"))
+                                                                     F.countDistinct("tienda").alias("tiendas"),
+                                                                     F.avg((F.col("f_promos_planeadas") > 0).cast("double")).alias("pct_series_con_promo"))
          .withColumn("real", F.lit(None).cast("double")).withColumn("tipo_dato", F.lit("pronostico")))
     partes.append(con_llaves(h.unionByName(p, allowMissingColumns=True).withColumn("nivel", F.lit(nivel)), dims))
 SERIE = partes[0]
@@ -97,7 +100,8 @@ SERIE = SERIE.withColumn("origen", F.lit(ORIGEN)).withColumn("fecha_calculo", F.
 guardar(SERIE, "gold", "dash_serie_tiempo", "Historia reciente y pronostico con banda P10-P90 por nivel (nacional, region, zona, tipo, categoria, tienda, serie) (40)", particion="nivel")
 comentar_columnas(tabla("gold", "dash_serie_tiempo"), {"nivel": "Nivel de agregacion: nacional, region, tipo_categoria, region_tipo, zona, categoria, tienda, serie.",
                                                        "tipo_dato": "real (venta observada) o pronostico.", "p10": "Suma de P10 (banda conservadora al agregar).",
-                                                       "p90": "Suma de P90 (banda conservadora al agregar).", "tiendas": "Tiendas que aportan a la fila."})
+                                                       "p90": "Suma de P90 (banda conservadora al agregar).", "tiendas": "Tiendas que aportan a la fila.",
+                                                       "pct_series_con_promo": "Fraccion de series con promocion ese dia: observada (real) o planeada (pronostico)."})
 n = spark.table(tabla("gold", "dash_serie_tiempo")).groupBy("nivel").count().toPandas()
 mostrar(n, "Filas por nivel", formatos={"count": "int"})
 

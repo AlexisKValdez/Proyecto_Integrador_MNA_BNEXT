@@ -15,7 +15,7 @@ DATASETS = {
        ancho_relativo_banda, pct_filas_con_promo_planeada, origen, desde, hasta
 FROM {T('gold_dash_resumen_ejecutivo')}"""),
     "ds_serie": ("Serie de tiempo", f"""SELECT nivel, tienda, categoria_id, categoria_nombre, region, zona, tipo_categoria, fecha, tipo_dato,
-       real, pronostico, p10, p90, COALESCE(real, pronostico) AS venta, tiendas
+       real, pronostico, p10, p90, COALESCE(real, pronostico) AS venta, tiendas, pct_series_con_promo
 FROM {T('gold_dash_serie_tiempo')}"""),
     "ds_precision": ("Precisión del modelo", f"""SELECT fase, semana, region, tipo_categoria, modelo, n_filas, wmape, sesgo_pct, cobertura,
        alerta_error, alerta_sesgo, alerta_cobertura
@@ -121,7 +121,8 @@ L = [texto("t_pron", "## Historia reciente y pronóstico con banda P10–P90\nEl
      filtro("f_pr_tipo", "ds_serie", "tipo_categoria", "Tipo", 0, 2), filtro("f_pr_cat", "ds_serie", "categoria_nombre", "Categoría", 2, 2),
      filtro("f_pr_tienda", "ds_serie", "tienda", "Tienda", 4, 2),
      lineas("l_venta", "ds_serie", "fecha", "venta", "Venta real y pronóstico por día", 0, 3, 6, 7, color="tipo_dato"),
-     lineas("l_p10", "ds_serie", "fecha", "p10", "Banda inferior P10", 0, 10, 3, 5), lineas("l_p90", "ds_serie", "fecha", "p90", "Banda superior P90", 3, 10, 3, 5)]
+     lineas("l_p10", "ds_serie", "fecha", "p10", "Banda inferior P10", 0, 10, 3, 5), lineas("l_p90", "ds_serie", "fecha", "p90", "Banda superior P90", 3, 10, 3, 5),
+     lineas("l_promo", "ds_serie", "fecha", "pct_series_con_promo", "Series con promoción (observada antes del origen, planeada después)", 0, 15, 6, 4, color="tipo_dato", agg="AVG")]
 paginas.append({"name": "p_pronostico", "displayName": "Pronóstico", "layout": L})
 # ---- 3. Precisión
 L = [texto("t_prec", "## ¿Qué tan bien acierta el modelo?\nWMAPE (error relativo), sesgo y cobertura del intervalo por semana, región y tipo; fase `prueba` = septiembre no visto, `produccion_*` = pronósticos ya contrastados con la venta real.", 0, 0, 6, 1),
