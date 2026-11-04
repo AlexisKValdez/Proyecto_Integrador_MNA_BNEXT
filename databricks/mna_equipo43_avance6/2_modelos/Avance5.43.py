@@ -13,7 +13,7 @@
 # MAGIC
 # MAGIC **Qué hace esta libreta.** Parte de los mejores modelos individuales del Avance 4, les ajusta hiperparámetros y
 # MAGIC construye ensambles homogéneos y heterogéneos; elige el modelo final con criterios de negocio **antes** de ver los
-# MAGIC datos de prueba y después lo evalúa una sola vez en septiembre (datos no vistos). Termina con intervalos de
+# MAGIC datos de prueba y después lo evalúa una sola vez en septiembre y octubre (datos no vistos). Termina con intervalos de
 # MAGIC pronóstico (P10/P50/P90), una compuerta de aceptación, el registro del modelo y la tabla de pronóstico operativo.
 # MAGIC
 # MAGIC | Clave | Modelo | Tipo | Estrategia |
@@ -43,7 +43,7 @@
 # MAGIC | --- | --- | --- | --- |
 # MAGIC | `ajuste` | 20-may | 21-may a 03-jun | Optuna, número de árboles y primeros pesos de los ensambles |
 # MAGIC | `corte_1` … `corte_4` | 03-jun, 17-jun, 01-jul, 17-ago | 4 bloques de 14 días | **desarrollo**: comparar y elegir (los mismos del Avance 4) |
-# MAGIC | `prueba_1`, `prueba_2` | 31-ago, 14-sep | 01–14 y 15–28 de septiembre | **datos no vistos**: el modelo elegido, congelado con datos al 31-ago, pronostica septiembre |
+# MAGIC | `prueba_1` … `prueba_4` | 31-ago, 14-sep, 28-sep, 12-oct | 1-sep a 26-oct en cuatro bloques | **datos no vistos**: el modelo elegido, congelado con datos al 31-ago, pronostica septiembre |
 # MAGIC | `pronostico` | último día con datos | 14 días siguientes | salida operativa (sin objetivo todavía) |
 # MAGIC
 # MAGIC **Dónde se cumple cada criterio de la rúbrica**
@@ -54,7 +54,7 @@
 # MAGIC | Tabla comparativa ordenada por la métrica principal, con otras métricas y tiempos de entrenamiento | §5.2 y §5.3 |
 # MAGIC | Elección del modelo final alineada con el negocio | §5.7 (matriz de decisión) y §6.5 (compuerta) |
 # MAGIC | Gráficos del modelo final con interpretación | §7 (siete gráficos, cada uno con su lectura calculada) |
-# MAGIC | Objetivo 3.6: evaluación en datos no vistos | §5.3, §6 y §7 (septiembre) |
+# MAGIC | Objetivo 3.6: evaluación en datos no vistos | §5.3, §6 y §7 (septiembre y octubre) |
 # MAGIC | Declaración sobre el uso de herramientas de IA | última celda |
 # MAGIC
 # MAGIC **Confidencialidad.** Con `MODO_PUBLICO = True` las salidas sólo muestran métricas relativas, tiempos,
@@ -115,16 +115,17 @@ except Exception:
 CATALOGO       = "modeladoprescriptivoventas"     # catálogo de Unity Catalog del proyecto
 ESQUEMA_DATOS  = "maestria"                       # esquema donde están los volúmenes de Bnext
 RAIZ_VOLUMENES = "/Volumes"
-MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"]   # un volumen por mes
+MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]   # un volumen por mes
 
 # Cortes del walk-forward. Son FIJOS (los del Avance 4): así, al llegar un mes nuevo, los modelos se siguen comparando
 # en las mismas ventanas. Los bloques de prueba son datos no vistos: no intervienen en el ajuste ni en la elección del
-# modelo y sólo existen cuando ya están cargados sus días (septiembre).
+# modelo y sólo existen cuando ya están cargados sus días (septiembre y octubre).
 DIAS_CORTE = 14                                           # días que se pronostican desde cada origen
 ORIGEN_AJUSTE = "2026-05-20"                              # bloque 21-may…03-jun: sólo para afinar hiperparámetros
 ORIGENES_CORTES = {"corte_1": "2026-06-03", "corte_2": "2026-06-17",      # desarrollo: con estos se compara y se elige
                    "corte_3": "2026-07-01", "corte_4": "2026-08-17"}
-ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14"}    # prueba no vista: 01–14 y 15–28 de septiembre
+ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14",    # prueba no vista: 01–14 y 15–28 de septiembre
+                   "prueba_3": "2026-09-28", "prueba_4": "2026-10-12"}    # y 29-sep–12-oct, 13–26 de octubre (modelos congelados al 31-ago)
 
 # Dónde se guardan las tablas del equipo:
 #   False → dentro de maestria con prefijo de capa: modeladoprescriptivoventas.maestria.bronze_ventas_lineas,
@@ -1025,7 +1026,7 @@ INCLUIR_Q_LIGHTGBM = parametro("INCLUIR_Q_LIGHTGBM", True)
 # Q_LightGBM_CQR: tres LightGBM cuantílicos con calibración conformal (el método del avance anterior), como comparación.
 # False ahorra ~40 min en modo completo: el modelo final usa entonces Q_Conformal.
 METODO_INTERVALOS = "automatico"
-# "automatico" → el modelo final usa el método con menor pérdida pinball en septiembre entre los que cumplen la banda.
+# "automatico" → el modelo final usa el método con menor pérdida pinball en los bloques de prueba entre los que cumplen la banda.
 N_TRAMOS_CONFORMAL = 10                       # tramos del pronóstico (deciles) en que se agrupan los residuos
 MIN_FILAS_GRUPO_CONFORMAL = 200               # un grupo con menos filas usa el grupo más amplio
 S6_QUANTILE_PARAMETERS = {
@@ -1512,12 +1513,13 @@ ESQUEMA_CALENDARIO_PROMOS = {
     "nombre": "texto · nombre comercial (opcional)",
     "inicio_planeado": "fecha · primer día planeado (obligatorio)",
     "fin_planeado": "fecha · último día planeado (obligatorio)",
-    "categoria_id": "texto · categoría canónica; vacío si se da categoria_nombre",
-    "categoria_nombre": "texto · nombre de la categoría tal como está en silver.catalogo_categorias (se traduce a categoria_id)",
+    "categoria_id": "texto · categoría canónica; vacío si se da categoria_nombre; TODAS = todas las categorías (o las del tipo_categoria indicado)",
+    "categoria_nombre": "texto · nombre de la categoría tal como está en silver.catalogo_categorias (se traduce a categoria_id); TODAS = todas",
+    "tipo_categoria": "texto · mercancia / generico / servicio; con TODAS acota a ese tipo (vacío = todos los tipos)",
     "tienda": "texto · tienda; vacío = todas las tiendas del alcance indicado en zona o región",
     "zona": "texto · zona; vacío = no se acota por zona",
     "region": "texto · región; vacío = no se acota por región",
-    "descuento_planeado": "decimal 0–1 · descuento planeado (0.15 = 15 %); vacío = desconocido (se usa 0)",
+    "descuento_planeado": "decimal 0–1 · descuento planeado (0.15 = 15 %); vacío = desconocido (se imputa el descuento histórico de la categoría)",
     "tipo_mecanica": "texto · 'descuento', 'lleva N paga M', 'precio fijo', 'regalo', … (opcional)",
     "fecha_publicacion": "fecha · desde cuándo se conoce el plan; vacío = inicio_planeado − DIAS_ANTICIPACION_DEFECTO",
     "fuente": "texto · 'bnext' (plan real), 'placeholder' (inventada, sustituir) o 'historico_observado' (derivada del 09)",
@@ -3247,12 +3249,12 @@ def registrar_modelo_uc(registro, candidate, ejemplo, metricas) -> dict:
 # MAGIC    bolsa (bloques anteriores); predicción del universo evaluable por lotes de horizonte; sumas en los acumuladores;
 # MAGIC    las filas de la muestra común de este corte entran a la bolsa para los cortes siguientes.
 # MAGIC 4. **Selección.** Matriz de decisión con los cortes de desarrollo. El modelo elegido se registra **antes** de ver
-# MAGIC    septiembre.
-# MAGIC 5. **Prueba (datos no vistos).** Todo se entrena con datos al 31-ago y se congela; pronostica los dos bloques de
-# MAGIC    septiembre sin reentrenar. Se evalúan también los intervalos (conformal calibrado con el bloque del 18 al 31 de
-# MAGIC    agosto y LightGBM cuantílico).
-# MAGIC 6. **Modelo final.** El elegido se reentrena con todos los datos, se recalibran sus intervalos con septiembre, se
-# MAGIC    calcula la importancia de variables y se pronostican los 14 días siguientes al último dato.
+# MAGIC    los bloques de prueba.
+# MAGIC 5. **Prueba (datos no vistos).** Todo se entrena con datos al 31-ago y se congela; pronostica los bloques de prueba
+# MAGIC    (septiembre y octubre, hasta 8 semanas sin reentrenar: también mide cuánto envejece el modelo). Se evalúan los
+# MAGIC    intervalos (conformal calibrado con el bloque del 18 al 31 de agosto y LightGBM cuantílico).
+# MAGIC 6. **Modelo final.** El elegido se reentrena con todos los datos, se recalibran sus intervalos con el último bloque
+# MAGIC    observado, se calcula la importancia de variables y se pronostican los 14 días siguientes al último dato.
 
 # COMMAND ----------
 
@@ -3482,7 +3484,7 @@ def ejecutar_modelado(fuente, registro, n_jobs=None, estado=None) -> dict:
         gc.collect()
         cerrar_paso(bloque["corte"], {"minutos": reloj_corte.segundos / 60})
 
-    # ---------------------------------------------------------------- 4. selección (antes de ver septiembre)
+    # ---------------------------------------------------------------- 4. selección (antes de ver los bloques de prueba)
     if "seleccion" not in completados:
         subtitulo("4. Selección del modelo final con los cortes de desarrollo")
         tablas_dev = acum_dev["ampliada"].tablas()
@@ -3533,7 +3535,7 @@ def ejecutar_modelado(fuente, registro, n_jobs=None, estado=None) -> dict:
         gc.collect()
         cerrar_paso("prueba")
     elif not fuente.pruebas:
-        aviso("La Oro no tiene bloques de prueba: no hay evaluación en datos no vistos (carga septiembre y reconstruye 02 → 20).")
+        aviso("La Oro no tiene bloques de prueba: no hay evaluación en datos no vistos (carga los meses de prueba y reconstruye 02 → 20).")
 
     # ---------------------------------------------------------------- 6. modelo final, intervalos, importancia y pronóstico
     if REENTRENAR_FINAL and "final" not in completados:
@@ -4054,7 +4056,7 @@ hallazgo(f"Comparativa de desarrollo: {n_hom} ensambles homogéneos y {n_het} he
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 5.3 Prueba en datos no vistos (septiembre)
+# MAGIC ### 5.3 Prueba en datos no vistos (septiembre y octubre)
 # MAGIC Todos los modelos se entrenaron con datos hasta el 31 de agosto y se congelaron; pronostican del 1 al 28 de
 # MAGIC septiembre sin reentrenar. La tabla conserva el **orden de desarrollo** (no se reordena con la prueba, para no elegir
 # MAGIC con ella). `diferencia` = WMAPE en prueba − WMAPE en desarrollo: un valor cercano a cero indica que el desempeño se
@@ -4080,13 +4082,13 @@ if HAY_PRUEBA:
     from scipy.stats import spearmanr
     candidatos = NV.loc[~NV.tipo.isin(["referencia", "diagnostico"])]
     rho = spearmanr(candidatos["wmape_desarrollo"], candidatos["wmape_prueba"]).correlation if len(candidatos) > 2 else np.nan
-    hallazgo(f"Datos no vistos (septiembre): {AGG_LABELS[MODELO_FINAL]} WMAPE {nv.loc[MODELO_FINAL, 'wmape_prueba']:.4f} "
+    hallazgo(f"Datos no vistos (septiembre–octubre): {AGG_LABELS[MODELO_FINAL]} WMAPE {nv.loc[MODELO_FINAL, 'wmape_prueba']:.4f} "
              f"({nv.loc[MODELO_FINAL, 'mejora_vs_ingenuo_prueba']:+.1%} contra el ingenuo, {nv.loc['B0_Ingenuo', 'wmape_prueba']:.4f}; "
              f"sesgo {nv.loc[MODELO_FINAL, 'sesgo_prueba_pct']:+.2f} %); en desarrollo tenía {nv.loc[MODELO_FINAL, 'wmape_desarrollo']:.4f} "
-             f"(diferencia {nv.loc[MODELO_FINAL, 'diferencia']:+.4f}). El orden de los modelos se sostiene en septiembre "
+             f"(diferencia {nv.loc[MODELO_FINAL, 'diferencia']:+.4f}). El orden de los modelos se sostiene en la prueba "
              f"(correlación de rangos desarrollo–prueba {rho:.2f}).")
 else:
-    print("Esta corrida no tiene bloques de prueba (la Oro no incluye septiembre).")
+    print("Esta corrida no tiene bloques de prueba (la Oro no incluye los meses de prueba).")
 
 # COMMAND ----------
 
@@ -4205,7 +4207,7 @@ hallazgo(f"La corrida tardó {float(RESUMEN_C['minutos_modelado']):.0f} min de m
 # MAGIC Pesos fijados antes de ver resultados: error 35 %, estabilidad 10 %, sesgo 10 %, error en mercancía 10 %, costo de
 # MAGIC reentrenamiento 15 % (no penaliza mientras quepa en el Job mensual), interpretabilidad 10 % y operabilidad 10 %. El
 # MAGIC error se puntúa como mejora sobre el ingenuo relativa a la mejor mejora. La elección quedó registrada en la bitácora
-# MAGIC **antes** de evaluar septiembre.
+# MAGIC **antes** de evaluar los bloques de prueba.
 
 # COMMAND ----------
 
@@ -4231,7 +4233,7 @@ hallazgo(ARGUMENTO_FINAL)
 
 # MAGIC %md
 # MAGIC ## 6. Intervalos, diagnóstico estadístico y compuerta de aceptación
-# MAGIC ### 6.1 Intervalos P10–P90 en septiembre
+# MAGIC ### 6.1 Intervalos P10–P90 en la prueba no vista
 # MAGIC `cobertura` = fracción de días reales dentro de [P10, P90] (objetivo 80 %, banda 75–85 %). `ancho_relativo` = ancho
 # MAGIC medio del intervalo entre la venta media (más angosto = más útil, si cubre). Las pérdidas pinball relativas miden la
 # MAGIC calidad de cada cuantil (menor es mejor). `tasa_cruces_final` debe ser 0 (P10 ≤ P50 ≤ P90).
@@ -4262,7 +4264,7 @@ if "cuantiles" in C and len(C["cuantiles"]):
         mostrar(fuera[["ambito", "tipo_categoria", "region", "cobertura", "ancho_relativo"]].head(20),
                 f"Grupos fuera de la banda con {METODO_FINAL}", formatos={"cobertura": "pct", "ancho_relativo": "dec3"})
     g = GQ.set_index("metodo")
-    hallazgo(f"Intervalos en septiembre: " + "; ".join(f"{m} cubre {r.cobertura:.1%} con ancho relativo {r.ancho_relativo:.2f}"
+    hallazgo(f"Intervalos en la prueba no vista: " + "; ".join(f"{m} cubre {r.cobertura:.1%} con ancho relativo {r.ancho_relativo:.2f}"
                                                          for m, r in g.iterrows())
              + f". El modelo final usa {METODO_FINAL} ({'método automático: menor pinball dentro de la banda' if METODO_INTERVALOS == 'automatico' else 'fijado en la configuración'}).")
 else:
@@ -4354,7 +4356,7 @@ ax.barh(y_pos, orden["wmape_media_cortes"], xerr=orden["wmape_desviacion_cortes"
         linewidth=0.5, error_kw={"ecolor": "#4A4A4A", "capsize": 3}, label="desarrollo (media ± desviación entre cortes)")
 if HAY_PRUEBA:
     ax.scatter(orden["modelo"].map(C["comparativa_prueba"].set_index("modelo")["wmape_media_cortes"]), y_pos, marker="D", s=28,
-               color="#2E4D2E", zorder=3, label="prueba no vista (septiembre)")
+               color="#2E4D2E", zorder=3, label="prueba no vista (sep–oct)")
 ax.set_yticks(y_pos, [AGG_LABELS[m] for m in orden["modelo"]], fontsize=8)
 ax.invert_yaxis()
 ax.xaxis.set_major_formatter(PercentFormatter(1))
@@ -4373,7 +4375,7 @@ texto = (f"{AGG_LABELS[MODELO_FINAL]} (barra resaltada) logra WMAPE medio {f.loc
          f"desviación entre cortes (estabilidad), no un intervalo de confianza. ")
 if HAY_PRUEBA:
     cp = C["comparativa_prueba"].set_index("modelo")
-    texto += (f"Los rombos son septiembre, que no intervino en ninguna decisión: el modelo final obtiene {cp.loc[MODELO_FINAL, 'wmape_media_cortes']:.4f} "
+    texto += (f"Los rombos son los bloques de prueba (septiembre y octubre), que no intervinieron en ninguna decisión: el modelo final obtiene {cp.loc[MODELO_FINAL, 'wmape_media_cortes']:.4f} "
               f"(ingenuo {cp.loc['B0_Ingenuo', 'wmape_media_cortes']:.4f}), así que la ventaja se sostiene fuera de la muestra de desarrollo.")
 interpretar(1, "Comparación de modelos", texto)
 
@@ -4411,8 +4413,8 @@ texto = (f"El pronóstico agregado sigue el patrón semanal de la venta real: la
          f"(el mayor en {peor}). ")
 pruebas = [b for b in bloques if b.startswith("prueba")]
 if pruebas:
-    texto += (f"En septiembre (no visto) el sesgo es {', '.join(f'{sesgos[b]:+.1%} en {b}' for b in pruebas)}: incluye la quincena y las "
-              "fiestas patrias (15–16 de septiembre), que el calendario del modelo sí conoce. ")
+    texto += (f"En la prueba no vista el sesgo es {', '.join(f'{sesgos[b]:+.1%} en {b}' for b in pruebas)}: incluye la quincena y las "
+              "fiestas patrias (15–16 de septiembre) y Halloween, que el calendario del modelo sí conoce. ")
 texto += ("Los picos que el modelo suaviza corresponden a días con promociones o eventos que no se conocen en el origen; el calendario "
           "de promociones futuras (sección 9) es la vía para capturarlos. La línea del ingenuo copia la semana previa y por eso se "
           "adelanta o atrasa a los picos. Al sumar tiendas los errores se compensan: la cercanía de las curvas no implica error pequeño "
@@ -4458,7 +4460,7 @@ texto = (f"La mediana del residuo relativo es {np.median(rd):+.2f} veces la vent
          f"{dev_h.min():+.1f} % (h = {int(dev_h.idxmin())}) a {dev_h.max():+.1f} % (h = {int(dev_h.idxmax())}); "
          f"{int((dev_h.abs() > 3).sum())} de 14 horizontes salen de ±3 %. ")
 if "prueba" in rel:
-    texto += (f"En septiembre la distribución {'se mantiene' if abs(np.median(rel['prueba']) - np.median(rd)) < 0.1 else 'se desplaza'} "
+    texto += (f"En la prueba no vista la distribución {'se mantiene' if abs(np.median(rel['prueba']) - np.median(rd)) < 0.1 else 'se desplaza'} "
               f"(mediana {np.median(rel['prueba']):+.2f}), señal de que los errores no cambiaron de naturaleza con el mes nuevo.")
 interpretar(3, "Análisis de residuos", texto)
 
@@ -4493,7 +4495,7 @@ texto = (f"Cada punto agrupa las filas cuyo pronóstico cae en un tramo; si el m
          "sin venta) una razón menor que 1 indica que se pronostica algo de venta donde casi siempre hay cero; en los tramos altos, que "
          "pesan más en el WMAPE y en el surtido, la razón cercana a 1 indica buena calibración. ")
 if "prueba" in razones:
-    texto += f"En septiembre la razón va de {razones['prueba'].min():.2f} a {razones['prueba'].max():.2f}."
+    texto += f"En la prueba no vista la razón va de {razones['prueba'].min():.2f} a {razones['prueba'].max():.2f}."
 interpretar(4, "Calibración por tramo", texto)
 
 # ---------------------------------------------------------------------------------------------- 5. importancia de variables y pesos
@@ -4603,7 +4605,7 @@ if "cuantiles" in C and len(C["cuantiles"]):
     axes[0].yaxis.set_major_formatter(PercentFormatter(1))
     axes[0].set_xticks(range(1, 15))
     axes[0].set_xlabel("h")
-    axes[0].set_title("Cobertura P10–P90 por horizonte (septiembre)", fontsize=9)
+    axes[0].set_title("Cobertura P10–P90 por horizonte (prueba no vista)", fontsize=9)
     axes[0].legend(fontsize=7, frameon=False)
     d = Qh.loc[Qh.metodo.eq(METODO_FINAL) & Qh.ambito.isin(["tipo_categoria", "region"])].copy()
     d["grupo"] = np.where(d.ambito.eq("tipo_categoria"), "tipo: " + d["tipo_categoria"].astype(str), "región: " + d["region"].astype(str))
@@ -4682,7 +4684,7 @@ if existe(TABLA_MONITOREO):
         alertas = MON[["alerta_error", "alerta_sesgo", "alerta_cobertura"]].sum()
         mostrar_publico(MON.sort_values(["semana", "region", "tipo_categoria"]).head(30), "Monitoreo por semana × región × tipo (prueba)",
                         formatos={"wmape": "dec4", "sesgo_pct": "dec2", "cobertura": "pct"})
-        hallazgo(f"Monitoreo de septiembre: {len(MON)} combinaciones semana × región × tipo; alertas de error {int(alertas['alerta_error'])}, "
+        hallazgo(f"Monitoreo de la prueba no vista: {len(MON)} combinaciones semana × región × tipo; alertas de error {int(alertas['alerta_error'])}, "
                  f"de sesgo {int(alertas['alerta_sesgo'])} y de cobertura {int(alertas['alerta_cobertura'])}.")
 
 # COMMAND ----------
@@ -4703,7 +4705,7 @@ if existe(TABLA_MONITOREO):
 # MAGIC conocía `DIAS_ANTICIPACION_HISTORICO` días antes de empezar. Esa suposición queda declarada en la tabla (`fuente`).
 # MAGIC
 # MAGIC **Sin fuga.** Cada promoción trae `fecha_publicacion`; en cada origen T sólo cuentan las publicadas en o antes de T.
-# MAGIC Por eso las variables `f_*` son legítimas en los cortes históricos y en la prueba de septiembre.
+# MAGIC Por eso las variables `f_*` son legítimas en los cortes históricos y en la prueba no vista (septiembre–octubre).
 # MAGIC
 # MAGIC **Para actualizar el plan**: editar el Excel, volver a subirlo al volumen y correr `13`; el pronóstico operativo
 # MAGIC (`22_pronostico_operativo`) y el what-if (`30`) toman el plan nuevo sin reentrenar.
@@ -4744,7 +4746,7 @@ print("\nComparativa de desarrollo (ordenada por WMAPE medio de los cortes):")
 print(COMP[["posicion", "etiqueta", "tipo", "wmape_media_cortes", "wmape_desviacion_cortes", "mejora_vs_ingenuo", "sesgo_medio_pct",
             "wmape_mercancia", "min_entrenamiento_por_corte"]].to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 if HAY_PRUEBA:
-    print("\nPrueba no vista (septiembre):")
+    print("\nPrueba no vista (septiembre–octubre):")
     print(NV.drop(columns=["modelo"]).to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 if "ajuste_resumen" in C:
     print("\nAjuste fino:")
@@ -4753,7 +4755,7 @@ print("\nMatriz de decisión:")
 print(DEC.drop(columns=[c for c in ("modelo_final", "argumento") if c in DEC]).to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 print(f"\n{ARGUMENTO_FINAL}")
 if "cuantiles" in C:
-    print("\nIntervalos (septiembre):")
+    print("\nIntervalos (prueba no vista):")
     print(GQ.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
 if COMPUERTA_C:
     print(f"\nCompuerta: {COMPUERTA_C['desarrollo_status']} · registro: {COMPUERTA_C['registry_action']} · motivos de bloqueo: "

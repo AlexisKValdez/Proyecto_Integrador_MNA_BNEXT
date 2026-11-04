@@ -4,7 +4,7 @@
 # MAGIC **Proyecto Integrador MNA · Equipo 43**
 # MAGIC
 # MAGIC **Preguntas que responde**
-# MAGIC 1. Con siete meses de historia (marzo–septiembre), ¿a qué grano conviene pronosticar: categoría, marca (todas o las 300 líderes) o producto?
+# MAGIC 1. Con ocho meses de historia (marzo–octubre), ¿a qué grano conviene pronosticar: categoría, marca (todas o las 300 líderes) o producto?
 # MAGIC 2. ¿Qué tan intermitentes son las series tienda–categoría (Syntetos–Boylan) y cómo se reparten en ABC–XYZ?
 # MAGIC 3. ¿Qué estacionalidad hay y qué efecto tienen los festivos y el Mundial?
 # MAGIC 4. ¿Qué error tienen los modelos ingenuos? Es la **línea base nueva** que cualquier modelo debe superar, medida con
@@ -28,16 +28,17 @@
 CATALOGO       = "modeladoprescriptivoventas"     # catálogo de Unity Catalog del proyecto
 ESQUEMA_DATOS  = "maestria"                       # esquema donde están los volúmenes de Bnext
 RAIZ_VOLUMENES = "/Volumes"
-MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"]   # un volumen por mes
+MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]   # un volumen por mes
 
 # Cortes del walk-forward. Son FIJOS (los del Avance 4): así, al llegar un mes nuevo, los modelos se siguen comparando
 # en las mismas ventanas. Los bloques de prueba son datos no vistos: no intervienen en el ajuste ni en la elección del
-# modelo y sólo existen cuando ya están cargados sus días (septiembre).
+# modelo y sólo existen cuando ya están cargados sus días (septiembre y octubre).
 DIAS_CORTE = 14                                           # días que se pronostican desde cada origen
 ORIGEN_AJUSTE = "2026-05-20"                              # bloque 21-may…03-jun: sólo para afinar hiperparámetros
 ORIGENES_CORTES = {"corte_1": "2026-06-03", "corte_2": "2026-06-17",      # desarrollo: con estos se compara y se elige
                    "corte_3": "2026-07-01", "corte_4": "2026-08-17"}
-ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14"}    # prueba no vista: 01–14 y 15–28 de septiembre
+ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14",    # prueba no vista: 01–14 y 15–28 de septiembre
+                   "prueba_3": "2026-09-28", "prueba_4": "2026-10-12"}    # y 29-sep–12-oct, 13–26 de octubre (modelos congelados al 31-ago)
 
 # Dónde se guardan las tablas del equipo:
 #   False → dentro de maestria con prefijo de capa: modeladoprescriptivoventas.maestria.bronze_ventas_lineas,
@@ -798,6 +799,15 @@ EVENTOS = [
     {"fecha": "2026-06-24", "nombre": "Mundial: México vs Chequia", "tipo": "futbol"},
     {"fecha": "2026-09-15", "nombre": "Noche mexicana (víspera de la Independencia)", "tipo": "comercial"},
     {"fecha": "2026-09-16", "nombre": "Día de la Independencia", "tipo": "festivo"},
+    {"fecha": "2026-10-31", "nombre": "Halloween", "tipo": "comercial"},
+    {"fecha": "2026-11-01", "nombre": "Día de Muertos (Todos los Santos)", "tipo": "comercial"},
+    {"fecha": "2026-11-02", "nombre": "Día de Muertos (Fieles Difuntos)", "tipo": "festivo"},
+    {"fecha": "2026-11-13", "nombre": "El Buen Fin (inicio; fechas por confirmar)", "tipo": "comercial"},
+    {"fecha": "2026-11-16", "nombre": "Revolución Mexicana (descanso)", "tipo": "festivo"},
+    {"fecha": "2026-12-12", "nombre": "Día de la Virgen de Guadalupe", "tipo": "comercial"},
+    {"fecha": "2026-12-24", "nombre": "Nochebuena", "tipo": "comercial"},
+    {"fecha": "2026-12-25", "nombre": "Navidad", "tipo": "festivo"},
+    {"fecha": "2026-12-31", "nombre": "Fin de año", "tipo": "comercial"},
 ]
 PERIODOS = [{"inicio": "2026-06-11", "fin": "2026-07-19", "nombre": "Copa Mundial 2026"}]
 
@@ -1017,14 +1027,14 @@ from pyspark import StorageLevel
 claves = ["tienda", "categoria_id"]
 panel = persistir(P.select(*claves, "fecha", "venta", "tienda_inactiva", "sin_datos", "en_warmup", "dia_atipico",
                            "tipo_categoria"))
-# Cortes fijos de la configuración (los del Avance 4) más los bloques de prueba de septiembre cuando ya hay datos.
+# Cortes fijos de la configuración (los del Avance 4) más los bloques de prueba de septiembre y octubre cuando ya hay datos.
 # Cada bloque de 14 días y los 14 días previos a su origen deben tener datos completos (así ningún corte cae en un
 # hueco de entrega como julio 16–31). Los resúmenes de la línea base promedian sólo los cortes de desarrollo.
 dias_con_datos = {r[0] for r in P.where(F.col("sin_datos") == 0).select("fecha").distinct().collect()}
 CORTES = cortes_walk_forward(dias_con_datos)
 CORTES_DESARROLLO = [c["corte"] for c in CORTES if c["fase"] == "desarrollo"]
 mostrar(pd.DataFrame(CORTES)[["corte", "fase", "origen", "desde", "hasta"]],
-        "Cortes walk-forward (desarrollo = Avance 4; prueba = septiembre, datos no vistos)")
+        "Cortes walk-forward (desarrollo = Avance 4; prueba = septiembre y octubre, datos no vistos)")
 if len(CORTES_DESARROLLO) < N_CORTES:
     aviso(f"Sólo {len(CORTES_DESARROLLO)} cortes de desarrollo tienen datos completos (se esperaban {N_CORTES}).")
 
@@ -1079,7 +1089,7 @@ guardar(WF_TODOS.assign(fecha_calculo=pd.Timestamp.now()), "mlops", "linea_base_
         "Linea base ingenua a 14 dias desde el origen (estacional y media movil 7 d), cortes de desarrollo y de prueba (EDA 10)")
 if (WF_TODOS["fase"] == "prueba").any():
     prueba_lb = WF_TODOS[WF_TODOS["fase"] == "prueba"]
-    hallazgo(f"Bloques de prueba (septiembre, datos no vistos): ingenuo estacional WMAPE {prueba_lb['wmape_lag7'].mean():.4f} "
+    hallazgo(f"Bloques de prueba (septiembre y octubre, datos no vistos): ingenuo estacional WMAPE {prueba_lb['wmape_lag7'].mean():.4f} "
              f"en {len(prueba_lb)} bloques (desarrollo: {WF['wmape_lag7'].mean():.4f}).")
 guardar(POR_H.assign(fecha_calculo=pd.Timestamp.now()), "mlops", "linea_base_ingenua_horizonte",
         "WMAPE de la linea base ingenua por horizonte h = 1..14 (EDA 10)")

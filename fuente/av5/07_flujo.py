@@ -12,12 +12,12 @@
 # MAGIC    bolsa (bloques anteriores); predicción del universo evaluable por lotes de horizonte; sumas en los acumuladores;
 # MAGIC    las filas de la muestra común de este corte entran a la bolsa para los cortes siguientes.
 # MAGIC 4. **Selección.** Matriz de decisión con los cortes de desarrollo. El modelo elegido se registra **antes** de ver
-# MAGIC    septiembre.
-# MAGIC 5. **Prueba (datos no vistos).** Todo se entrena con datos al 31-ago y se congela; pronostica los dos bloques de
-# MAGIC    septiembre sin reentrenar. Se evalúan también los intervalos (conformal calibrado con el bloque del 18 al 31 de
-# MAGIC    agosto y LightGBM cuantílico).
-# MAGIC 6. **Modelo final.** El elegido se reentrena con todos los datos, se recalibran sus intervalos con septiembre, se
-# MAGIC    calcula la importancia de variables y se pronostican los 14 días siguientes al último dato.
+# MAGIC    los bloques de prueba.
+# MAGIC 5. **Prueba (datos no vistos).** Todo se entrena con datos al 31-ago y se congela; pronostica los bloques de prueba
+# MAGIC    (septiembre y octubre, hasta 8 semanas sin reentrenar: también mide cuánto envejece el modelo). Se evalúan los
+# MAGIC    intervalos (conformal calibrado con el bloque del 18 al 31 de agosto y LightGBM cuantílico).
+# MAGIC 6. **Modelo final.** El elegido se reentrena con todos los datos, se recalibran sus intervalos con el último bloque
+# MAGIC    observado, se calcula la importancia de variables y se pronostican los 14 días siguientes al último dato.
 
 # COMMAND ----------
 
@@ -247,7 +247,7 @@ def ejecutar_modelado(fuente, registro, n_jobs=None, estado=None) -> dict:
         gc.collect()
         cerrar_paso(bloque["corte"], {"minutos": reloj_corte.segundos / 60})
 
-    # ---------------------------------------------------------------- 4. selección (antes de ver septiembre)
+    # ---------------------------------------------------------------- 4. selección (antes de ver los bloques de prueba)
     if "seleccion" not in completados:
         subtitulo("4. Selección del modelo final con los cortes de desarrollo")
         tablas_dev = acum_dev["ampliada"].tablas()
@@ -298,7 +298,7 @@ def ejecutar_modelado(fuente, registro, n_jobs=None, estado=None) -> dict:
         gc.collect()
         cerrar_paso("prueba")
     elif not fuente.pruebas:
-        aviso("La Oro no tiene bloques de prueba: no hay evaluación en datos no vistos (carga septiembre y reconstruye 02 → 20).")
+        aviso("La Oro no tiene bloques de prueba: no hay evaluación en datos no vistos (carga los meses de prueba y reconstruye 02 → 20).")
 
     # ---------------------------------------------------------------- 6. modelo final, intervalos, importancia y pronóstico
     if REENTRENAR_FINAL and "final" not in completados:

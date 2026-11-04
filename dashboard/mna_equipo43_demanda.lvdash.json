@@ -15,7 +15,7 @@
    "displayName": "Serie de tiempo",
    "queryLines": [
     "SELECT nivel, tienda, categoria_id, categoria_nombre, region, zona, tipo_categoria, fecha, tipo_dato,\n",
-    "       real, pronostico, p10, p90, COALESCE(real, pronostico) AS venta, tiendas\n",
+    "       real, pronostico, p10, p90, COALESCE(real, pronostico) AS venta, tiendas, pct_series_con_promo\n",
     "FROM modeladoprescriptivoventas.maestria.gold_dash_serie_tiempo\n"
    ]
   },
@@ -1040,6 +1040,71 @@
       "y": 10,
       "width": 3,
       "height": 5
+     }
+    },
+    {
+     "widget": {
+      "name": "l_promo",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_serie",
+         "fields": [
+          {
+           "name": "fecha",
+           "expression": "`fecha`"
+          },
+          {
+           "name": "avg(pct_series_con_promo)",
+           "expression": "AVG(`pct_series_con_promo`)"
+          },
+          {
+           "name": "tipo_dato",
+           "expression": "`tipo_dato`"
+          }
+         ],
+         "disaggregated": false
+        }
+       }
+      ],
+      "spec": {
+       "version": 3,
+       "widgetType": "line",
+       "encodings": {
+        "x": {
+         "fieldName": "fecha",
+         "scale": {
+          "type": "temporal"
+         },
+         "displayName": "fecha"
+        },
+        "y": {
+         "fieldName": "avg(pct_series_con_promo)",
+         "scale": {
+          "type": "quantitative"
+         },
+         "displayName": "Series con promoción (observada antes del origen, planeada después)"
+        },
+        "color": {
+         "fieldName": "tipo_dato",
+         "scale": {
+          "type": "categorical"
+         },
+         "displayName": "tipo_dato"
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Series con promoción (observada antes del origen, planeada después)"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 15,
+      "width": 6,
+      "height": 4
      }
     }
    ]

@@ -3,7 +3,7 @@
 
 # MAGIC %md
 # MAGIC ## 6. Intervalos, diagnóstico estadístico y compuerta de aceptación
-# MAGIC ### 6.1 Intervalos P10–P90 en septiembre
+# MAGIC ### 6.1 Intervalos P10–P90 en la prueba no vista
 # MAGIC `cobertura` = fracción de días reales dentro de [P10, P90] (objetivo 80 %, banda 75–85 %). `ancho_relativo` = ancho
 # MAGIC medio del intervalo entre la venta media (más angosto = más útil, si cubre). Las pérdidas pinball relativas miden la
 # MAGIC calidad de cada cuantil (menor es mejor). `tasa_cruces_final` debe ser 0 (P10 ≤ P50 ≤ P90).
@@ -34,7 +34,7 @@ if "cuantiles" in C and len(C["cuantiles"]):
         mostrar(fuera[["ambito", "tipo_categoria", "region", "cobertura", "ancho_relativo"]].head(20),
                 f"Grupos fuera de la banda con {METODO_FINAL}", formatos={"cobertura": "pct", "ancho_relativo": "dec3"})
     g = GQ.set_index("metodo")
-    hallazgo(f"Intervalos en septiembre: " + "; ".join(f"{m} cubre {r.cobertura:.1%} con ancho relativo {r.ancho_relativo:.2f}"
+    hallazgo(f"Intervalos en la prueba no vista: " + "; ".join(f"{m} cubre {r.cobertura:.1%} con ancho relativo {r.ancho_relativo:.2f}"
                                                          for m, r in g.iterrows())
              + f". El modelo final usa {METODO_FINAL} ({'método automático: menor pinball dentro de la banda' if METODO_INTERVALOS == 'automatico' else 'fijado en la configuración'}).")
 else:

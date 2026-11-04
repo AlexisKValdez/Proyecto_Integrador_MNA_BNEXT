@@ -75,7 +75,7 @@ de Bnext (acuerdo de confidencialidad).
 | --- | --- | --- |
 | `ajuste` | 20-may | Optuna, número de árboles y primeros pesos de los ensambles |
 | `corte_1`…`corte_4` | 03-jun, 17-jun, 01-jul, 17-ago | desarrollo: comparar y elegir (los del Avance 4) |
-| `prueba_1`, `prueba_2` | 31-ago, 14-sep | datos no vistos: el modelo elegido, congelado al 31-ago, pronostica septiembre |
+| `prueba_1` … `prueba_4` | 31-ago, 14-sep, 28-sep, 12-oct | datos no vistos: el modelo elegido, congelado al 31-ago, pronostica septiembre y octubre |
 | `pronostico` | último día con datos | salida operativa: 14 días siguientes |
 
 ---

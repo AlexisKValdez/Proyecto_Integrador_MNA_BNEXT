@@ -4,7 +4,7 @@
 # MAGIC **Proyecto Integrador MNA · Equipo 43**
 # MAGIC
 # MAGIC **Preguntas que responde**
-# MAGIC 1. Con siete meses de historia (marzo–septiembre), ¿a qué grano conviene pronosticar: categoría, marca (todas o las 300 líderes) o producto?
+# MAGIC 1. Con ocho meses de historia (marzo–octubre), ¿a qué grano conviene pronosticar: categoría, marca (todas o las 300 líderes) o producto?
 # MAGIC 2. ¿Qué tan intermitentes son las series tienda–categoría (Syntetos–Boylan) y cómo se reparten en ABC–XYZ?
 # MAGIC 3. ¿Qué estacionalidad hay y qué efecto tienen los festivos y el Mundial?
 # MAGIC 4. ¿Qué error tienen los modelos ingenuos? Es la **línea base nueva** que cualquier modelo debe superar, medida con
@@ -260,14 +260,14 @@ from pyspark import StorageLevel
 claves = ["tienda", "categoria_id"]
 panel = persistir(P.select(*claves, "fecha", "venta", "tienda_inactiva", "sin_datos", "en_warmup", "dia_atipico",
                            "tipo_categoria"))
-# Cortes fijos de la configuración (los del Avance 4) más los bloques de prueba de septiembre cuando ya hay datos.
+# Cortes fijos de la configuración (los del Avance 4) más los bloques de prueba de septiembre y octubre cuando ya hay datos.
 # Cada bloque de 14 días y los 14 días previos a su origen deben tener datos completos (así ningún corte cae en un
 # hueco de entrega como julio 16–31). Los resúmenes de la línea base promedian sólo los cortes de desarrollo.
 dias_con_datos = {r[0] for r in P.where(F.col("sin_datos") == 0).select("fecha").distinct().collect()}
 CORTES = cortes_walk_forward(dias_con_datos)
 CORTES_DESARROLLO = [c["corte"] for c in CORTES if c["fase"] == "desarrollo"]
 mostrar(pd.DataFrame(CORTES)[["corte", "fase", "origen", "desde", "hasta"]],
-        "Cortes walk-forward (desarrollo = Avance 4; prueba = septiembre, datos no vistos)")
+        "Cortes walk-forward (desarrollo = Avance 4; prueba = septiembre y octubre, datos no vistos)")
 if len(CORTES_DESARROLLO) < N_CORTES:
     aviso(f"Sólo {len(CORTES_DESARROLLO)} cortes de desarrollo tienen datos completos (se esperaban {N_CORTES}).")
 
@@ -322,7 +322,7 @@ guardar(WF_TODOS.assign(fecha_calculo=pd.Timestamp.now()), "mlops", "linea_base_
         "Linea base ingenua a 14 dias desde el origen (estacional y media movil 7 d), cortes de desarrollo y de prueba (EDA 10)")
 if (WF_TODOS["fase"] == "prueba").any():
     prueba_lb = WF_TODOS[WF_TODOS["fase"] == "prueba"]
-    hallazgo(f"Bloques de prueba (septiembre, datos no vistos): ingenuo estacional WMAPE {prueba_lb['wmape_lag7'].mean():.4f} "
+    hallazgo(f"Bloques de prueba (septiembre y octubre, datos no vistos): ingenuo estacional WMAPE {prueba_lb['wmape_lag7'].mean():.4f} "
              f"en {len(prueba_lb)} bloques (desarrollo: {WF['wmape_lag7'].mean():.4f}).")
 guardar(POR_H.assign(fecha_calculo=pd.Timestamp.now()), "mlops", "linea_base_ingenua_horizonte",
         "WMAPE de la linea base ingenua por horizonte h = 1..14 (EDA 10)")

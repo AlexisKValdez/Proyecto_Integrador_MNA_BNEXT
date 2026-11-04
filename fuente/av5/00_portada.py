@@ -13,7 +13,7 @@
 # MAGIC
 # MAGIC **Qué hace esta libreta.** Parte de los mejores modelos individuales del Avance 4, les ajusta hiperparámetros y
 # MAGIC construye ensambles homogéneos y heterogéneos; elige el modelo final con criterios de negocio **antes** de ver los
-# MAGIC datos de prueba y después lo evalúa una sola vez en septiembre (datos no vistos). Termina con intervalos de
+# MAGIC datos de prueba y después lo evalúa una sola vez en septiembre y octubre (datos no vistos). Termina con intervalos de
 # MAGIC pronóstico (P10/P50/P90), una compuerta de aceptación, el registro del modelo y la tabla de pronóstico operativo.
 # MAGIC
 # MAGIC | Clave | Modelo | Tipo | Estrategia |
@@ -43,7 +43,7 @@
 # MAGIC | --- | --- | --- | --- |
 # MAGIC | `ajuste` | 20-may | 21-may a 03-jun | Optuna, número de árboles y primeros pesos de los ensambles |
 # MAGIC | `corte_1` … `corte_4` | 03-jun, 17-jun, 01-jul, 17-ago | 4 bloques de 14 días | **desarrollo**: comparar y elegir (los mismos del Avance 4) |
-# MAGIC | `prueba_1`, `prueba_2` | 31-ago, 14-sep | 01–14 y 15–28 de septiembre | **datos no vistos**: el modelo elegido, congelado con datos al 31-ago, pronostica septiembre |
+# MAGIC | `prueba_1` … `prueba_4` | 31-ago, 14-sep, 28-sep, 12-oct | 1-sep a 26-oct en cuatro bloques | **datos no vistos**: el modelo elegido, congelado con datos al 31-ago, pronostica septiembre |
 # MAGIC | `pronostico` | último día con datos | 14 días siguientes | salida operativa (sin objetivo todavía) |
 # MAGIC
 # MAGIC **Dónde se cumple cada criterio de la rúbrica**
@@ -54,7 +54,7 @@
 # MAGIC | Tabla comparativa ordenada por la métrica principal, con otras métricas y tiempos de entrenamiento | §5.2 y §5.3 |
 # MAGIC | Elección del modelo final alineada con el negocio | §5.7 (matriz de decisión) y §6.5 (compuerta) |
 # MAGIC | Gráficos del modelo final con interpretación | §7 (siete gráficos, cada uno con su lectura calculada) |
-# MAGIC | Objetivo 3.6: evaluación en datos no vistos | §5.3, §6 y §7 (septiembre) |
+# MAGIC | Objetivo 3.6: evaluación en datos no vistos | §5.3, §6 y §7 (septiembre y octubre) |
 # MAGIC | Declaración sobre el uso de herramientas de IA | última celda |
 # MAGIC
 # MAGIC **Confidencialidad.** Con `MODO_PUBLICO = True` las salidas sólo muestran métricas relativas, tiempos,

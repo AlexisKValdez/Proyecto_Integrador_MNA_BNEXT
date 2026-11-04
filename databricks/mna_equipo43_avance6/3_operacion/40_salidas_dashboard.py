@@ -30,16 +30,17 @@
 CATALOGO       = "modeladoprescriptivoventas"     # catálogo de Unity Catalog del proyecto
 ESQUEMA_DATOS  = "maestria"                       # esquema donde están los volúmenes de Bnext
 RAIZ_VOLUMENES = "/Volumes"
-MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"]   # un volumen por mes
+MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]   # un volumen por mes
 
 # Cortes del walk-forward. Son FIJOS (los del Avance 4): así, al llegar un mes nuevo, los modelos se siguen comparando
 # en las mismas ventanas. Los bloques de prueba son datos no vistos: no intervienen en el ajuste ni en la elección del
-# modelo y sólo existen cuando ya están cargados sus días (septiembre).
+# modelo y sólo existen cuando ya están cargados sus días (septiembre y octubre).
 DIAS_CORTE = 14                                           # días que se pronostican desde cada origen
 ORIGEN_AJUSTE = "2026-05-20"                              # bloque 21-may…03-jun: sólo para afinar hiperparámetros
 ORIGENES_CORTES = {"corte_1": "2026-06-03", "corte_2": "2026-06-17",      # desarrollo: con estos se compara y se elige
                    "corte_3": "2026-07-01", "corte_4": "2026-08-17"}
-ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14"}    # prueba no vista: 01–14 y 15–28 de septiembre
+ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14",    # prueba no vista: 01–14 y 15–28 de septiembre
+                   "prueba_3": "2026-09-28", "prueba_4": "2026-10-12"}    # y 29-sep–12-oct, 13–26 de octubre (modelos congelados al 31-ago)
 
 # Dónde se guardan las tablas del equipo:
 #   False → dentro de maestria con prefijo de capa: modeladoprescriptivoventas.maestria.bronze_ventas_lineas,
@@ -517,7 +518,8 @@ PANEL = leer_tabla(TABLA_PANEL, "09_panel_diario")
 DESDE_HIST = (pd.Timestamp(ORIGEN) - pd.Timedelta(days=DIAS_HISTORIA - 1)).date()
 REAL = (PANEL.where((F.col("fecha") >= F.lit(DESDE_HIST)) & (F.col("fecha") <= F.lit(ORIGEN)) & (F.col("sin_datos") == 0))
         .select(F.col("tienda").cast("string").alias("tienda"), F.col("categoria_id").cast("string").alias("categoria_id"), "fecha",
-                F.col("venta").alias("real"), "tipo_categoria", F.col("tienda_inactiva"))
+                F.col("venta").alias("real"), "tipo_categoria", F.col("tienda_inactiva"),
+                (F.coalesce(F.col("promos_vigentes"), F.lit(0)) > 0).cast("double").alias("con_promo"))
         .join(TIENDAS, "tienda", "left").join(CAT, "categoria_id", "left"))
 print(f"Origen {ORIGEN} · historia desde {DESDE_HIST}")
 NIVELES = {"nacional": [], "region": ["region"], "tipo_categoria": ["tipo_categoria"], "region_tipo": ["region", "tipo_categoria"],
@@ -542,11 +544,13 @@ def con_llaves(df, dims):
 titulo("1. SERIE DE TIEMPO")
 partes = []
 for nivel, dims in NIVELES.items():
-    h = (REAL.groupBy(*dims, "fecha").agg(F.sum("real").alias("real"), F.countDistinct("tienda").alias("tiendas"))
+    h = (REAL.groupBy(*dims, "fecha").agg(F.sum("real").alias("real"), F.countDistinct("tienda").alias("tiendas"),
+                                          F.avg("con_promo").alias("pct_series_con_promo"))
          .withColumn("pronostico", F.lit(None).cast("double")).withColumn("p10", F.lit(None).cast("double")).withColumn("p90", F.lit(None).cast("double"))
          .withColumn("tipo_dato", F.lit("real")))
     p = (P.groupBy(*dims, F.col("fecha_objetivo").alias("fecha")).agg(F.sum("prediccion_puntual").alias("pronostico"), F.sum("p10").alias("p10"), F.sum("p90").alias("p90"),
-                                                                     F.countDistinct("tienda").alias("tiendas"))
+                                                                     F.countDistinct("tienda").alias("tiendas"),
+                                                                     F.avg((F.col("f_promos_planeadas") > 0).cast("double")).alias("pct_series_con_promo"))
          .withColumn("real", F.lit(None).cast("double")).withColumn("tipo_dato", F.lit("pronostico")))
     partes.append(con_llaves(h.unionByName(p, allowMissingColumns=True).withColumn("nivel", F.lit(nivel)), dims))
 SERIE = partes[0]
@@ -556,7 +560,8 @@ SERIE = SERIE.withColumn("origen", F.lit(ORIGEN)).withColumn("fecha_calculo", F.
 guardar(SERIE, "gold", "dash_serie_tiempo", "Historia reciente y pronostico con banda P10-P90 por nivel (nacional, region, zona, tipo, categoria, tienda, serie) (40)", particion="nivel")
 comentar_columnas(tabla("gold", "dash_serie_tiempo"), {"nivel": "Nivel de agregacion: nacional, region, tipo_categoria, region_tipo, zona, categoria, tienda, serie.",
                                                        "tipo_dato": "real (venta observada) o pronostico.", "p10": "Suma de P10 (banda conservadora al agregar).",
-                                                       "p90": "Suma de P90 (banda conservadora al agregar).", "tiendas": "Tiendas que aportan a la fila."})
+                                                       "p90": "Suma de P90 (banda conservadora al agregar).", "tiendas": "Tiendas que aportan a la fila.",
+                                                       "pct_series_con_promo": "Fraccion de series con promocion ese dia: observada (real) o planeada (pronostico)."})
 n = spark.table(tabla("gold", "dash_serie_tiempo")).groupBy("nivel").count().toPandas()
 mostrar(n, "Filas por nivel", formatos={"count": "int"})
 

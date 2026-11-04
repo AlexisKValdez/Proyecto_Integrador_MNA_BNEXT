@@ -2,8 +2,8 @@
 
 | # | Qué se necesita | Para qué | Estado |
 | --- | --- | --- | --- |
-| 1 | **Calendario de promociones planeadas** (archivo con promoción, categoría, alcance, fechas, descuento) | Sustituir el placeholder de `calendario_promociones_plan.xlsx`; el modelo y el what-if ya lo usan | pendiente |
-| 2 | **Octubre de 2026** (y meses siguientes) en el volumen `maestria/2026-10` | Medir en producción el pronóstico de octubre; reentrenar con más historia | pendiente |
+| 1 | **Calendario de promociones planeadas**: hoy sólo hay fechas; faltan categoría (o tipo), descuento y mecánica | Con sólo fechas se captura `categoria_id = TODAS` y el descuento se imputa; con el detalle el efecto deja de estar diluido | parcial (sólo fechas) |
+| 2 | **Noviembre de 2026** (y meses siguientes) en el volumen `maestria/2026-11` | Medir en producción el pronóstico de noviembre; reentrenar con más historia | octubre entregado; noviembre pendiente |
 | 3 | Entrega faltante del **16 al 31 de julio** | Cerrar el hueco (hoy los cortes lo evitan) | pendiente desde octubre |
 | 4 | Significado de los **estatus de tienda** 8 / 17 / 4 | Confirmar qué tiendas se pronostican | pendiente |
 | 5 | Confirmación de **GENERICO** y de las uniones de categorías (YOGURTH→YOGURT, AGUA→AGUAS, …) | Aprobación `alcance_categoria` en `mlops.aprobaciones` | pendiente |

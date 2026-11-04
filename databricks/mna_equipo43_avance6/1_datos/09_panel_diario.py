@@ -38,16 +38,17 @@
 CATALOGO       = "modeladoprescriptivoventas"     # catálogo de Unity Catalog del proyecto
 ESQUEMA_DATOS  = "maestria"                       # esquema donde están los volúmenes de Bnext
 RAIZ_VOLUMENES = "/Volumes"
-MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"]   # un volumen por mes
+MESES = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]   # un volumen por mes
 
 # Cortes del walk-forward. Son FIJOS (los del Avance 4): así, al llegar un mes nuevo, los modelos se siguen comparando
 # en las mismas ventanas. Los bloques de prueba son datos no vistos: no intervienen en el ajuste ni en la elección del
-# modelo y sólo existen cuando ya están cargados sus días (septiembre).
+# modelo y sólo existen cuando ya están cargados sus días (septiembre y octubre).
 DIAS_CORTE = 14                                           # días que se pronostican desde cada origen
 ORIGEN_AJUSTE = "2026-05-20"                              # bloque 21-may…03-jun: sólo para afinar hiperparámetros
 ORIGENES_CORTES = {"corte_1": "2026-06-03", "corte_2": "2026-06-17",      # desarrollo: con estos se compara y se elige
                    "corte_3": "2026-07-01", "corte_4": "2026-08-17"}
-ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14"}    # prueba no vista: 01–14 y 15–28 de septiembre
+ORIGENES_PRUEBA = {"prueba_1": "2026-08-31", "prueba_2": "2026-09-14",    # prueba no vista: 01–14 y 15–28 de septiembre
+                   "prueba_3": "2026-09-28", "prueba_4": "2026-10-12"}    # y 29-sep–12-oct, 13–26 de octubre (modelos congelados al 31-ago)
 
 # Dónde se guardan las tablas del equipo:
 #   False → dentro de maestria con prefijo de capa: modeladoprescriptivoventas.maestria.bronze_ventas_lineas,

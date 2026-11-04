@@ -36,7 +36,7 @@ ax.barh(y_pos, orden["wmape_media_cortes"], xerr=orden["wmape_desviacion_cortes"
         linewidth=0.5, error_kw={"ecolor": "#4A4A4A", "capsize": 3}, label="desarrollo (media ± desviación entre cortes)")
 if HAY_PRUEBA:
     ax.scatter(orden["modelo"].map(C["comparativa_prueba"].set_index("modelo")["wmape_media_cortes"]), y_pos, marker="D", s=28,
-               color="#2E4D2E", zorder=3, label="prueba no vista (septiembre)")
+               color="#2E4D2E", zorder=3, label="prueba no vista (sep–oct)")
 ax.set_yticks(y_pos, [AGG_LABELS[m] for m in orden["modelo"]], fontsize=8)
 ax.invert_yaxis()
 ax.xaxis.set_major_formatter(PercentFormatter(1))
@@ -55,7 +55,7 @@ texto = (f"{AGG_LABELS[MODELO_FINAL]} (barra resaltada) logra WMAPE medio {f.loc
          f"desviación entre cortes (estabilidad), no un intervalo de confianza. ")
 if HAY_PRUEBA:
     cp = C["comparativa_prueba"].set_index("modelo")
-    texto += (f"Los rombos son septiembre, que no intervino en ninguna decisión: el modelo final obtiene {cp.loc[MODELO_FINAL, 'wmape_media_cortes']:.4f} "
+    texto += (f"Los rombos son los bloques de prueba (septiembre y octubre), que no intervinieron en ninguna decisión: el modelo final obtiene {cp.loc[MODELO_FINAL, 'wmape_media_cortes']:.4f} "
               f"(ingenuo {cp.loc['B0_Ingenuo', 'wmape_media_cortes']:.4f}), así que la ventaja se sostiene fuera de la muestra de desarrollo.")
 interpretar(1, "Comparación de modelos", texto)
 
@@ -93,8 +93,8 @@ texto = (f"El pronóstico agregado sigue el patrón semanal de la venta real: la
          f"(el mayor en {peor}). ")
 pruebas = [b for b in bloques if b.startswith("prueba")]
 if pruebas:
-    texto += (f"En septiembre (no visto) el sesgo es {', '.join(f'{sesgos[b]:+.1%} en {b}' for b in pruebas)}: incluye la quincena y las "
-              "fiestas patrias (15–16 de septiembre), que el calendario del modelo sí conoce. ")
+    texto += (f"En la prueba no vista el sesgo es {', '.join(f'{sesgos[b]:+.1%} en {b}' for b in pruebas)}: incluye la quincena y las "
+              "fiestas patrias (15–16 de septiembre) y Halloween, que el calendario del modelo sí conoce. ")
 texto += ("Los picos que el modelo suaviza corresponden a días con promociones o eventos que no se conocen en el origen; el calendario "
           "de promociones futuras (sección 9) es la vía para capturarlos. La línea del ingenuo copia la semana previa y por eso se "
           "adelanta o atrasa a los picos. Al sumar tiendas los errores se compensan: la cercanía de las curvas no implica error pequeño "
@@ -140,7 +140,7 @@ texto = (f"La mediana del residuo relativo es {np.median(rd):+.2f} veces la vent
          f"{dev_h.min():+.1f} % (h = {int(dev_h.idxmin())}) a {dev_h.max():+.1f} % (h = {int(dev_h.idxmax())}); "
          f"{int((dev_h.abs() > 3).sum())} de 14 horizontes salen de ±3 %. ")
 if "prueba" in rel:
-    texto += (f"En septiembre la distribución {'se mantiene' if abs(np.median(rel['prueba']) - np.median(rd)) < 0.1 else 'se desplaza'} "
+    texto += (f"En la prueba no vista la distribución {'se mantiene' if abs(np.median(rel['prueba']) - np.median(rd)) < 0.1 else 'se desplaza'} "
               f"(mediana {np.median(rel['prueba']):+.2f}), señal de que los errores no cambiaron de naturaleza con el mes nuevo.")
 interpretar(3, "Análisis de residuos", texto)
 
@@ -175,7 +175,7 @@ texto = (f"Cada punto agrupa las filas cuyo pronóstico cae en un tramo; si el m
          "sin venta) una razón menor que 1 indica que se pronostica algo de venta donde casi siempre hay cero; en los tramos altos, que "
          "pesan más en el WMAPE y en el surtido, la razón cercana a 1 indica buena calibración. ")
 if "prueba" in razones:
-    texto += f"En septiembre la razón va de {razones['prueba'].min():.2f} a {razones['prueba'].max():.2f}."
+    texto += f"En la prueba no vista la razón va de {razones['prueba'].min():.2f} a {razones['prueba'].max():.2f}."
 interpretar(4, "Calibración por tramo", texto)
 
 # ---------------------------------------------------------------------------------------------- 5. importancia de variables y pesos
@@ -285,7 +285,7 @@ if "cuantiles" in C and len(C["cuantiles"]):
     axes[0].yaxis.set_major_formatter(PercentFormatter(1))
     axes[0].set_xticks(range(1, 15))
     axes[0].set_xlabel("h")
-    axes[0].set_title("Cobertura P10–P90 por horizonte (septiembre)", fontsize=9)
+    axes[0].set_title("Cobertura P10–P90 por horizonte (prueba no vista)", fontsize=9)
     axes[0].legend(fontsize=7, frameon=False)
     d = Qh.loc[Qh.metodo.eq(METODO_FINAL) & Qh.ambito.isin(["tipo_categoria", "region"])].copy()
     d["grupo"] = np.where(d.ambito.eq("tipo_categoria"), "tipo: " + d["tipo_categoria"].astype(str), "región: " + d["region"].astype(str))

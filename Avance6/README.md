@@ -61,7 +61,7 @@ Volúmenes de Bnext (parquet mensual)
 | Paso | Qué | Tiempo |
 | --- | --- | --- |
 | 0 | Importar `databricks/mna_equipo43_avance6.zip` en el workspace (o conectar el repositorio como Git folder) y subir `calendario/calendario_promociones_plan.xlsx` a `outputs/calendario/` del volumen (opcional: el 13 lo crea si no está) | 10 min |
-| 1 | **J1 ingesta_mes** con `MES = 2026-09` (o correr 02 → 08 → 09 → 10 → 11 a mano) | 1.5–4 h |
+| 1 | **J1 ingesta_mes** con `MES = 2026-10` (o correr 02 → 08 → 09 → 10 → 11 a mano) | 1.5–4 h |
 | 2 | **J2 features** (13 → 20) | 40–90 min |
 | 3 | **J3 entrenamiento** (`Avance5.43` completo). Antes, una prueba de humo con `MODO_RAPIDO = True` | 4–6 h |
 | 4 | `24_promocion_modelo` con `ACCION = evaluar` (y `promover` si procede) | 2 min |
@@ -83,11 +83,13 @@ Detalles de cada Job y parámetros: `jobs/LEEME.md`. Qué hacer en cada situaci�
 
 ## 6. Límites declarados
 
-- El calendario trae un **placeholder inventado**: las cifras del what-if sólo valen con el plan real de Bnext.
+- El calendario trae un **placeholder inventado**: las cifras del what-if sólo valen con el plan real de Bnext. Si Bnext
+  sólo da fechas, se capturan como `categoria_id = TODAS` con descuento imputado: el efecto queda diluido hasta tener el detalle.
 - El histórico de promociones «planeadas» se aproxima con la vigencia observada (supuesto: se conocían 14 días antes).
 - El reparto a producto es *top-down* por participación: P10/P90 por producto son asignaciones consistentes, no cuantiles
   propios; sin inventario, el techo de demanda no es un pedido sugerido.
-- El acierto en producción se mide cuando llegue octubre; hasta entonces la referencia es la prueba de septiembre.
+- Con octubre cargado, la prueba no vista cubre cuatro bloques (1-sep a 26-oct) con los modelos congelados al 31 de
+  agosto: también mide cuánto envejece el modelo sin reentrenar. El acierto en producción se mide cuando llegue noviembre.
 - El registro en Unity Catalog y los Jobs dependen de permisos del workspace (`docs/PENDIENTES_BNEXT.md`).
 
 ## 7. Confidencialidad

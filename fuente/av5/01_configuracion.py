@@ -374,7 +374,7 @@ INCLUIR_Q_LIGHTGBM = parametro("INCLUIR_Q_LIGHTGBM", True)
 # Q_LightGBM_CQR: tres LightGBM cuantílicos con calibración conformal (el método del avance anterior), como comparación.
 # False ahorra ~40 min en modo completo: el modelo final usa entonces Q_Conformal.
 METODO_INTERVALOS = "automatico"
-# "automatico" → el modelo final usa el método con menor pérdida pinball en septiembre entre los que cumplen la banda.
+# "automatico" → el modelo final usa el método con menor pérdida pinball en los bloques de prueba entre los que cumplen la banda.
 N_TRAMOS_CONFORMAL = 10                       # tramos del pronóstico (deciles) en que se agrupan los residuos
 MIN_FILAS_GRUPO_CONFORMAL = 200               # un grupo con menos filas usa el grupo más amplio
 S6_QUANTILE_PARAMETERS = {

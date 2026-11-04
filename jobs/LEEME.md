@@ -37,11 +37,11 @@ workspace usa otra versión de entorno serverless, cambia `"client"` en `environ
 
 | Job | Parámetro | Para qué |
 | --- | --- | --- |
-| J1 | `MES` (parámetro del Job, p. ej. `2026-10`) | el mes que se carga en Bronce; `08` siempre relimpia todos |
+| J1 | `MES` (parámetro del Job; por defecto `2026-10`) | el mes que se carga en Bronce; `08` siempre relimpia todos |
 | J3 | `RUN_ID_REANUDAR` | reanudar una corrida interrumpida desde su punto de control |
 | J3 | `MODO_RAPIDO = True` | prueba de humo (20–40 min) antes de la corrida completa |
 | J4 | `ALIAS_MODELO = challenger` | pronosticar con el retador para compararlo |
-| J4 | `ORIGEN_PRONOSTICO = 2026-08-31` (en `22`) | pronóstico retrospectivo para medir el acierto en `23` |
+| J4 | `ORIGEN_PRONOSTICO` (en `22`) | pronosticar un origen distinto al último (el modelo rechaza orígenes anteriores a su calibración) |
 
 ## Reglas de operación
 

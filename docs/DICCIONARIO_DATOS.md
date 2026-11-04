@@ -127,12 +127,13 @@ Los comentarios de columna también están escritos en las tablas (Catalog Explo
 | `nombre` | texto · nombre comercial (opcional) |
 | `inicio_planeado` | fecha · primer día planeado (obligatorio) |
 | `fin_planeado` | fecha · último día planeado (obligatorio) |
-| `categoria_id` | texto · categoría canónica; vacío si se da categoria_nombre |
-| `categoria_nombre` | texto · nombre de la categoría tal como está en silver.catalogo_categorias (se traduce a categoria_id) |
+| `categoria_id` | texto · categoría canónica; vacío si se da categoria_nombre; TODAS = todas las categorías (o las del tipo_categoria indicado) |
+| `categoria_nombre` | texto · nombre de la categoría tal como está en silver.catalogo_categorias (se traduce a categoria_id); TODAS = todas |
+| `tipo_categoria` | texto · mercancia / generico / servicio; con TODAS acota a ese tipo (vacío = todos los tipos) |
 | `tienda` | texto · tienda; vacío = todas las tiendas del alcance indicado en zona o región |
 | `zona` | texto · zona; vacío = no se acota por zona |
 | `region` | texto · región; vacío = no se acota por región |
-| `descuento_planeado` | decimal 0–1 · descuento planeado (0.15 = 15 %); vacío = desconocido (se usa 0) |
+| `descuento_planeado` | decimal 0–1 · descuento planeado (0.15 = 15 %); vacío = desconocido (se imputa el descuento histórico de la categoría) |
 | `tipo_mecanica` | texto · 'descuento', 'lleva N paga M', 'precio fijo', 'regalo', … (opcional) |
 | `fecha_publicacion` | fecha · desde cuándo se conoce el plan; vacío = inicio_planeado − DIAS_ANTICIPACION_DEFECTO |
 | `fuente` | texto · 'bnext' (plan real), 'placeholder' (inventada, sustituir) o 'historico_observado' (derivada del 09) |
